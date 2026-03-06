@@ -1,0 +1,104 @@
+name: lint-ifchange
+description: Enforce LINT.IfChange/ThenChange directives in pull requests
+branding:
+  icon: check-circle
+  color: green
+
+inputs:
+  version:
+    description: "Release tag to install (e.g. v1.0.0). Empty means latest."
+    required: false
+    default: ""
+  args:
+    description: "Extra arguments passed to lint-ifchange"
+    required: false
+    default: ""
+  diff:
+    description: "Path to a pre-built diff file. If empty, the action generates one."
+    required: false
+    default: ""
+  token:
+    description: "GitHub token for downloading release assets"
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Detect platform
+      id: platform
+      shell: bash
+      run: |
+        case "${{ runner.os }}-${{ runner.arch }}" in
+          Linux-X64)   target="x86_64-unknown-linux-gnu" ; ext="tar.gz" ;;
+          Linux-ARM64)  target="aarch64-unknown-linux-gnu" ; ext="tar.gz" ;;
+          macOS-ARM64)  target="aarch64-apple-darwin" ; ext="tar.gz" ;;
+          macOS-X64)    target="x86_64-apple-darwin" ; ext="tar.gz" ;;
+          Windows-X64)  target="x86_64-pc-windows-msvc" ; ext="zip" ;;
+          *) echo "::error::Unsupported platform: ${{ runner.os }}-${{ runner.arch }}" ; exit 1 ;;
+        esac
+        echo "target=$target" >> "$GITHUB_OUTPUT"
+        echo "ext=$ext" >> "$GITHUB_OUTPUT"
+
+    - name: Resolve version
+      id: version
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        INPUT_VERSION: ${{ inputs.version }}
+      run: |
+        if [[ -n "$INPUT_VERSION" ]]; then
+          echo "tag=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
+        else
+          tag="$(gh api /repos/${{ github.action_repository }}/releases/latest --jq .tag_name)"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Download and install binary
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        set -euo pipefail
+        version="${{ steps.version.outputs.tag }}"
+        target="${{ steps.platform.outputs.target }}"
+        ext="${{ steps.platform.outputs.ext }}"
+        archive="lint-ifchange-${version}-${target}.${ext}"
+
+        gh release download "$version" \
+          --repo "${{ github.action_repository }}" \
+          --pattern "$archive" \
+          --dir "${{ runner.temp }}"
+
+        cd "${{ runner.temp }}"
+        if [[ "$ext" == "tar.gz" ]]; then
+          tar -xzf "$archive"
+        else
+          unzip -o "$archive"
+        fi
+        chmod +x lint-ifchange* 2>/dev/null || true
+        mkdir -p "$HOME/.local/bin"
+        mv lint-ifchange* "$HOME/.local/bin/"
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+    - name: Build diff
+      if: ${{ inputs.diff == '' }}
+      id: diff
+      shell: bash
+      run: |
+        set -euo pipefail
+        diff_file="${{ runner.temp }}/changes.diff"
+
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          git fetch origin "${{ github.base_ref }}" --depth=1 2>/dev/null || true
+          git diff --merge-base "origin/${{ github.base_ref }}" HEAD > "$diff_file"
+        else
+          git diff "${{ github.event.before }}" "${{ github.sha }}" > "$diff_file"
+        fi
+        echo "path=$diff_file" >> "$GITHUB_OUTPUT"
+
+    - name: Run lint-ifchange
+      shell: bash
+      run: |
+        diff_file="${{ inputs.diff || steps.diff.outputs.path }}"
+        lint-ifchange ${{ inputs.args }} "$diff_file"

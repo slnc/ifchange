@@ -1,6 +1,3 @@
-[![Test](https://github.com/slnc/lint-ifchange/actions/workflows/test.yml/badge.svg)](https://github.com/slnc/lint-ifchange/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/slnc/lint-ifchange/branch/main/graph/badge.svg)](https://codecov.io/gh/slnc/lint-ifchange)
-
 # lint-ifchange
 
 **Keep related files in sync. Automatically catch forgotten correlated changes in pull requests.**
@@ -118,17 +115,9 @@ chmod +x .git/hooks/pre-commit
 | **Lint** | **28 ms** | 714 ms | **~25x** |
 | **Check** | **15 ms** | 387 ms | **~26x** |
 
-## Testing
+## [Architecture](docs/ARCHITECTURE.md) · [Contributing](docs/CONTRIBUTING.md) · [License (MIT)](LICENSE)
 
-```bash
-cargo test          # 28 unit + 19 integration
-cargo bench         # criterion benchmarks
-```
+---
 
-## Architecture
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
-## License
-
-MIT
+[![Test](https://github.com/slnc/lint-ifchange/actions/workflows/test.yml/badge.svg)](https://github.com/slnc/lint-ifchange/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/slnc/lint-ifchange/branch/main/graph/badge.svg)](https://codecov.io/gh/slnc/lint-ifchange)
