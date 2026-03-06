@@ -99,7 +99,22 @@ When two files reference each other, only changes *within* an `IfChange` block t
 
 Use as a pre-commit hook, CI lint step, or GitHub Actions check to enforce cross-file consistency in every pull request. Ready-to-copy templates are in [examples/](examples/README.md).
 
-Quick pre-commit setup:
+<!-- LINT.IfChange("action") -->
+### GitHub Action
+
+```yaml
+- uses: slnc/lint-ifchange@v1
+```
+
+| Input | Description | Default |
+|-------|-------------|---------|
+| `version` | Release tag to install (e.g. `v1.0.0`). Empty means latest. | latest |
+| `args` | Extra arguments passed to lint-ifchange | |
+| `diff` | Path to a pre-built diff file. If empty, the action generates one. | |
+| `token` | GitHub token for downloading release assets | `github.token` |
+<!-- LINT.ThenChange("action.yml#inputs") -->
+
+### Pre-commit hook
 
 ```bash
 cp examples/hooks/pre-commit.ifttt-lint.sh .git/hooks/pre-commit

@@ -39,7 +39,10 @@ pub fn parse_directives_from_content(
     let pats = patterns();
     let mut directives = Vec::new();
 
-    for comment in &comments {
+    let mut comment_idx = 0;
+
+    while comment_idx < comments.len() {
+        let comment = &comments[comment_idx];
         let comment_lines: Vec<&str> = comment.text.lines().collect();
         let mut line_idx = 0;
 
@@ -91,19 +94,48 @@ pub fn parse_directives_from_content(
                 {
                     // Multi-line: accumulate until ')'
                     let mut accumulated = line_text.to_string();
+                    let directive_line = current_line;
+
+                    // First try within this comment's remaining lines
                     let start = line_idx;
                     line_idx += 1;
+                    let mut found_close = false;
                     while line_idx < comment_lines.len() {
                         let next_line = comment_lines[line_idx];
                         accumulated.push(' ');
                         accumulated.push_str(next_line);
                         if next_line.contains(')') {
                             line_idx += 1;
+                            found_close = true;
                             break;
                         }
                         line_idx += 1;
                     }
-                    let directive_line = comment.start_line + start;
+
+                    // If not found and this is a single-line comment, look at subsequent comments
+                    if !found_close && comment_lines.len() == 1 {
+                        let mut next_ci = comment_idx + 1;
+                        while next_ci < comments.len() {
+                            let next_comment = &comments[next_ci];
+                            // Only consume consecutive single-line comments
+                            if next_comment.text.lines().count() != 1 {
+                                break;
+                            }
+                            accumulated.push(' ');
+                            accumulated.push_str(&next_comment.text);
+                            if next_comment.text.contains(')') {
+                                next_ci += 1;
+                                found_close = true;
+                                break;
+                            }
+                            next_ci += 1;
+                        }
+                        if found_close {
+                            comment_idx = next_ci;
+                        }
+                    }
+
+                    let _ = start;
                     if let Some(caps) = pats.then_change_array.captures(&accumulated) {
                         let inner = caps.get(1).unwrap().as_str();
                         for target in parse_array_targets(inner) {
@@ -111,6 +143,10 @@ pub fn parse_directives_from_content(
                                 line: directive_line,
                                 target,
                             });
+                        }
+                        if found_close && comment_lines.len() == 1 {
+                            // comment_idx already advanced, skip to outer loop
+                            break;
                         }
                         continue;
                     }
@@ -120,6 +156,9 @@ pub fn parse_directives_from_content(
                             line: directive_line,
                             target,
                         });
+                        if found_close && comment_lines.len() == 1 {
+                            break;
+                        }
                         continue;
                     }
                     return Err(DirectiveParseError::MalformedDirective {
@@ -239,6 +278,7 @@ pub fn parse_directives_from_content(
 
             line_idx += 1;
         }
+        comment_idx += 1;
     }
 
     Ok(directives)
@@ -395,5 +435,35 @@ mod tests {
         )
         .unwrap();
         assert_eq!(then_targets(directives), vec!["x.ts"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_array_line_comments_slash() {
+        let content = "// LINT.IfChange\nconst x = 1;\n// LINT.ThenChange([\n//   \"a.ts\",\n//   \"b.ts\",\n// ])\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.ts", "b.ts"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_array_line_comments_hash() {
+        let content =
+            "# LINT.IfChange\nVALUE = 1\n# LINT.ThenChange([\n#   \"a.py\",\n#   \"b.py\",\n# ])\n";
+        let directives = parse_directives_from_content(content, "x.yml").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.py", "b.py"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_single_target_line_comments() {
+        let content = "// LINT.IfChange\n// LINT.ThenChange(\n//   \"a.ts\"\n// )\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.ts"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_array_line_comments_dash() {
+        let content =
+            "-- LINT.IfChange\n-- LINT.ThenChange([\n--   \"a.sql\",\n--   \"b.sql\",\n-- ])\n";
+        let directives = parse_directives_from_content(content, "x.sql").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.sql", "b.sql"]);
     }
 }
