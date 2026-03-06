@@ -36,8 +36,8 @@ check:
 	@cargo fmt --all -- --check
 
 check_fix:
-	cargo fmt --all
-	cargo clippy --all-targets --all-features -- -D warnings
+	@cargo fmt --all
+	@cargo clippy --all-targets --all-features -- -D warnings
 
 check_audit:
 	cargo fmt --all -- --check

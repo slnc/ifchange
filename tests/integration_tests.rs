@@ -80,13 +80,13 @@ fn run_lint_stdin(input: &str, args: &[&str]) -> (i32, String, String) {
 }
 
 #[test]
-fn test_empty_diff() {
+fn empty_diff() {
     let (code, _stdout, _stderr) = run_lint("");
     assert_eq!(code, 0);
 }
 
 #[test]
-fn test_no_error_when_target_changed() {
+fn no_error_when_target_changed() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -107,7 +107,7 @@ fn test_no_error_when_target_changed() {
 }
 
 #[test]
-fn test_error_when_target_not_changed() {
+fn error_when_target_not_changed() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -128,7 +128,7 @@ fn test_error_when_target_not_changed() {
 }
 
 #[test]
-fn test_labeled_change_ok() {
+fn labeled_change_ok() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[
         ("file1.ts", "// LINT.IfChange\n// LINT.ThenChange(\"file2.ts#label1\")\n"),
@@ -143,7 +143,7 @@ fn test_labeled_change_ok() {
 }
 
 #[test]
-fn test_labeled_change_missing() {
+fn labeled_change_missing() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[
         ("file1.ts", "// LINT.IfChange\n// LINT.ThenChange(\"file2.ts#label1\")\n"),
@@ -159,7 +159,7 @@ fn test_labeled_change_missing() {
 }
 
 #[test]
-fn test_orphan_then_change() {
+fn orphan_then_change() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -178,7 +178,7 @@ fn test_orphan_then_change() {
 }
 
 #[test]
-fn test_orphan_if_change() {
+fn orphan_if_change() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[("file1.ts", "// LINT.IfChange\n")]);
     let diff = make_diff(
@@ -194,7 +194,7 @@ fn test_orphan_if_change() {
 }
 
 #[test]
-fn test_warn_mode() {
+fn warn_mode() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -214,7 +214,7 @@ fn test_warn_mode() {
 }
 
 #[test]
-fn test_ignore_glob() {
+fn ignore_glob() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -238,7 +238,7 @@ fn test_ignore_glob() {
 }
 
 #[test]
-fn test_cross_reference_ignores_outside_changes() {
+fn cross_reference_ignores_outside_changes() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[
         ("source.py", "# Header\ndef helper():\n    return 1\n# LINT.IfChange\nclass Status:\n    ACTIVE = 1\n# LINT.ThenChange(\"target.py\")\ndef other():\n    return 2\n"),
@@ -257,7 +257,7 @@ fn test_cross_reference_ignores_outside_changes() {
 }
 
 #[test]
-fn test_cross_reference_detects_inside_changes() {
+fn cross_reference_detects_inside_changes() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[
         ("source.py", "# Header\n# LINT.IfChange\nclass Status:\n    ACTIVE = 1\n    INACTIVE = 2\n# LINT.ThenChange(\"target.py\")\ndef other():\n    return 2\n"),
@@ -276,7 +276,7 @@ fn test_cross_reference_detects_inside_changes() {
 }
 
 #[test]
-fn test_self_reference_with_label() {
+fn self_reference_with_label() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[
         ("file1.ts", "// LINT.Label(\"label1\")\nconsole.log(1);\n// LINT.EndLabel\n// LINT.IfChange\n// LINT.ThenChange(\"#label1\")\n"),
@@ -297,7 +297,7 @@ fn test_self_reference_with_label() {
 }
 
 #[test]
-fn test_python_hash_comments() {
+fn python_hash_comments() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -317,7 +317,7 @@ fn test_python_hash_comments() {
 }
 
 #[test]
-fn test_check_mode_duplicate_labels() {
+fn check_mode_duplicate_labels() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -334,7 +334,7 @@ fn test_check_mode_duplicate_labels() {
 }
 
 #[test]
-fn test_check_mode_unique_labels() {
+fn check_mode_unique_labels() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -351,21 +351,21 @@ fn test_check_mode_unique_labels() {
 }
 
 #[test]
-fn test_verbose_output() {
+fn verbose_output() {
     let (code, _, stderr) = run_lint_with_args("", &["-v"]);
     assert_eq!(code, 0);
     assert!(stderr.contains("Parallelism:"), "stderr: {}", stderr);
 }
 
 #[test]
-fn test_deleted_files_ignored() {
+fn deleted_files_ignored() {
     let diff = "--- a/deleted.ts\n+++ /dev/null\n@@ -1,3 +0,0 @@\n-// LINT.IfChange\n-value = 1\n-// LINT.ThenChange(\"other.ts\")\n";
     let (code, _, _) = run_lint(diff);
     assert_eq!(code, 0);
 }
 
 #[test]
-fn test_ifchange_label_in_error_context() {
+fn ifchange_label_in_error_context() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -390,7 +390,7 @@ fn test_ifchange_label_in_error_context() {
 }
 
 #[test]
-fn test_no_change_outside_block() {
+fn no_change_outside_block() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[
         ("file1.ts", "const other = 0;\n// LINT.IfChange\nconst v = 1;\n// LINT.ThenChange(\"file2.ts\")\nconst more = 2;\n"),
@@ -409,7 +409,7 @@ fn test_no_change_outside_block() {
 }
 
 #[test]
-fn test_invalid_diff_input_exits_2() {
+fn invalid_diff_input_exits_2() {
     let tmp = tempfile::NamedTempFile::new().unwrap();
     fs::write(tmp.path(), "this is not a diff").unwrap();
     let output = Command::new(binary_path())
@@ -422,7 +422,7 @@ fn test_invalid_diff_input_exits_2() {
 }
 
 #[test]
-fn test_missing_diff_file_exits_2() {
+fn missing_diff_file_exits_2() {
     let output = Command::new(binary_path())
         .arg("/definitely/missing/diff.patch")
         .output()
@@ -431,27 +431,27 @@ fn test_missing_diff_file_exits_2() {
 }
 
 #[test]
-fn test_stdin_diff_mode() {
+fn stdin_diff_mode() {
     let diff = "--- a/f.txt\n+++ b/f.txt\n@@ -1 +1 @@\n-a\n+b\n";
     let (code, _stdout, _stderr) = run_lint_stdin(diff, &["-"]);
     assert_eq!(code, 0);
 }
 
 #[test]
-fn test_parallelism_flag_path() {
+fn parallelism_flag_path() {
     let (code, _stdout, _stderr) = run_lint_with_args("", &["-p", "2"]);
     assert_eq!(code, 0);
 }
 
 #[test]
-fn test_verbose_parallelism_uses_explicit_value() {
+fn verbose_parallelism_uses_explicit_value() {
     let (code, _stdout, stderr) = run_lint_with_args("", &["-v", "-p", "2"]);
     assert_eq!(code, 0);
     assert!(stderr.contains("Parallelism: 2"), "stderr: {}", stderr);
 }
 
 #[test]
-fn test_check_mode_verbose_and_parse_error() {
+fn check_mode_verbose_and_parse_error() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[("bad.ts", "// LINT.ThenChange(\n")]);
     let output = Command::new(binary_path())
@@ -469,7 +469,7 @@ fn test_check_mode_verbose_and_parse_error() {
 }
 
 #[test]
-fn test_check_mode_skips_non_lint_files() {
+fn check_mode_skips_non_lint_files() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[("plain.ts", "const x = 1;\n")]);
     let output = Command::new(binary_path())
@@ -481,7 +481,7 @@ fn test_check_mode_skips_non_lint_files() {
 
 #[cfg(unix)]
 #[test]
-fn test_check_mode_unreadable_file_is_skipped() {
+fn check_mode_unreadable_file_is_skipped() {
     use std::os::unix::fs::PermissionsExt;
     let dir = TempDir::new().unwrap();
     let path = dir.path().join("secret.ts");
@@ -504,7 +504,7 @@ fn test_check_mode_unreadable_file_is_skipped() {
 }
 
 #[test]
-fn test_changed_file_parse_error_reported() {
+fn changed_file_parse_error_reported() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[("bad.ts", "// LINT.IfChange(\n")]);
     let diff = make_diff(
@@ -524,7 +524,7 @@ fn test_changed_file_parse_error_reported() {
 }
 
 #[test]
-fn test_duplicate_labels_in_changed_file_reported() {
+fn duplicate_labels_in_changed_file_reported() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -547,7 +547,7 @@ fn test_duplicate_labels_in_changed_file_reported() {
 }
 
 #[test]
-fn test_malformed_target_file_reports_not_found() {
+fn malformed_target_file_reports_not_found() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -569,7 +569,7 @@ fn test_malformed_target_file_reports_not_found() {
 }
 
 #[test]
-fn test_missing_target_file_reports_not_found() {
+fn missing_target_file_reports_not_found() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -588,7 +588,7 @@ fn test_missing_target_file_reports_not_found() {
 }
 
 #[test]
-fn test_missing_target_label_reports_available_labels() {
+fn missing_target_label_reports_available_labels() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -622,7 +622,7 @@ fn test_missing_target_label_reports_available_labels() {
 }
 
 #[test]
-fn test_ignore_orphan_thenchange_by_target() {
+fn ignore_orphan_thenchange_by_target() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[("a.ts", "// LINT.ThenChange(\"foo.ts\")\n")]);
     let diff = make_diff(dir.path(), &[("a.ts", "@@ -1 +1 @@\n-// LINT.ThenChange(\"foo.ts\")\n+// LINT.ThenChange(\"foo.ts\") // changed")]);
@@ -631,7 +631,7 @@ fn test_ignore_orphan_thenchange_by_target() {
 }
 
 #[test]
-fn test_ignore_orphan_ifchange_by_label() {
+fn ignore_orphan_ifchange_by_label() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[("a.ts", "// LINT.IfChange(\"cfg\")\n")]);
     let diff = make_diff(
@@ -646,7 +646,7 @@ fn test_ignore_orphan_ifchange_by_label() {
 }
 
 #[test]
-fn test_multiple_ifchange_marks_first_orphan() {
+fn multiple_ifchange_marks_first_orphan() {
     let dir = TempDir::new().unwrap();
     write_files(dir.path(), &[(
         "a.ts",
@@ -666,7 +666,7 @@ fn test_multiple_ifchange_marks_first_orphan() {
 }
 
 #[test]
-fn test_verbose_changed_file_progress() {
+fn verbose_changed_file_progress() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -700,7 +700,7 @@ fn test_verbose_changed_file_progress() {
 }
 
 #[test]
-fn test_verbose_ignored_orphans_log_messages() {
+fn verbose_ignored_orphans_log_messages() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -729,7 +729,7 @@ fn test_verbose_ignored_orphans_log_messages() {
 }
 
 #[test]
-fn test_phase2_duplicate_labels_in_target_file_reported() {
+fn phase2_duplicate_labels_in_target_file_reported() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -761,7 +761,7 @@ fn test_phase2_duplicate_labels_in_target_file_reported() {
 }
 
 #[test]
-fn test_phase2_parse_error_ignored_by_target_ignore() {
+fn phase2_parse_error_ignored_by_target_ignore() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -785,7 +785,7 @@ fn test_phase2_parse_error_ignored_by_target_ignore() {
 }
 
 #[test]
-fn test_phase2_parse_error_ignored_by_if_label_ignore() {
+fn phase2_parse_error_ignored_by_if_label_ignore() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -806,7 +806,7 @@ fn test_phase2_parse_error_ignored_by_if_label_ignore() {
 }
 
 #[test]
-fn test_missing_label_with_no_available_labels_reports_none() {
+fn missing_label_with_no_available_labels_reports_none() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -832,7 +832,7 @@ fn test_missing_label_with_no_available_labels_reports_none() {
 }
 
 #[test]
-fn test_target_in_diff_with_no_changed_lines_reports_expected_changes() {
+fn target_in_diff_with_no_changed_lines_reports_expected_changes() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
@@ -856,7 +856,7 @@ fn test_target_in_diff_with_no_changed_lines_reports_expected_changes() {
 
 #[cfg(unix)]
 #[test]
-fn test_stdin_read_error_exits_2() {
+fn stdin_read_error_exits_2() {
     use std::fs::File;
     use std::process::Stdio;
 

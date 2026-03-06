@@ -204,18 +204,15 @@ mod tests {
     use std::collections::HashSet;
 
     #[test]
-    fn test_build_changed_lines_map_dedups() {
-        let mut map = HashMap::new();
-        let mut fc = FileChanges {
-            added_lines: HashSet::new(),
-            removed_lines: HashSet::new(),
-        };
-        fc.added_lines.insert(3);
-        fc.added_lines.insert(2);
-        fc.removed_lines.insert(3);
-        map.insert("a.ts".to_string(), fc);
-
+    fn build_changed_lines_map_dedups() {
+        let map = HashMap::from([(
+            "a.ts".to_string(),
+            FileChanges {
+                added_lines: HashSet::from([2, 3]),
+                removed_lines: HashSet::from([3]),
+            },
+        )]);
         let merged = build_changed_lines_map(&map);
-        assert_eq!(merged.get("a.ts").cloned().unwrap_or_default(), vec![2, 3]);
+        assert_eq!(merged["a.ts"], vec![2, 3]);
     }
 }

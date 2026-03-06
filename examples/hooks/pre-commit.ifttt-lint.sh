@@ -13,5 +13,4 @@ if git diff --cached --quiet --exit-code; then
   exit 0
 fi
 
-echo "Running lint-ifchange on staged diff..."
 git diff --cached --no-ext-diff --relative | lint-ifchange

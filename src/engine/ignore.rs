@@ -89,23 +89,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_match_glob_star() {
-        let matcher = NameMatcher::from_glob("*.rs");
-        assert!(matcher.is_match("foo.rs"));
-        assert!(!matcher.is_match("foo.ts"));
+    fn glob_star() {
+        let m = NameMatcher::from_glob("*.rs");
+        assert!(m.is_match("foo.rs"));
+        assert!(!m.is_match("foo.ts"));
     }
 
     #[test]
-    fn test_match_glob_question() {
-        let matcher = NameMatcher::from_glob("?.rs");
-        assert!(matcher.is_match("a.rs"));
-        assert!(!matcher.is_match("ab.rs"));
+    fn glob_question() {
+        let m = NameMatcher::from_glob("?.rs");
+        assert!(m.is_match("a.rs"));
+        assert!(!m.is_match("ab.rs"));
     }
 
     #[test]
-    fn test_parse_ignore_list() {
-        let list = vec!["foo.rs".to_string(), "bar.rs#my_label".to_string()];
-        let patterns = parse_ignore_list(&list);
+    fn parse_ignore_list_with_labels() {
+        let patterns = parse_ignore_list(&["foo.rs".into(), "bar.rs#my_label".into()]);
         assert_eq!(patterns.len(), 2);
         assert!(patterns[0].matcher.is_match("foo.rs"));
         assert!(patterns[0].label.is_none());

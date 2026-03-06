@@ -258,157 +258,142 @@ mod tests {
     use std::fs;
     use tempfile::TempDir;
 
-    #[test]
-    fn test_parse_array_targets() {
-        let targets = parse_array_targets(r#"'foo.ts', "bar.ts""#);
-        assert_eq!(targets, vec!["foo.ts", "bar.ts"]);
-    }
-
-    #[test]
-    fn test_parse_file_directives_missing_file_returns_empty() {
-        let result = parse_file_directives("/definitely/not/found/file.ts").unwrap();
-        assert!(result.is_empty());
-    }
-
-    #[test]
-    fn test_parse_file_directives_directory_returns_empty() {
-        let dir = TempDir::new().unwrap();
-        let result = parse_file_directives(dir.path().to_str().unwrap()).unwrap();
-        assert!(result.is_empty());
-    }
-
-    #[test]
-    fn test_parse_file_directives_reads_content() {
-        let dir = TempDir::new().unwrap();
-        let file = dir.path().join("a.ts");
-        fs::write(&file, "// LINT.IfChange\n// LINT.ThenChange(\"b.ts\")\n").unwrap();
-        let directives = parse_file_directives(file.to_str().unwrap()).unwrap();
-        assert!(matches!(directives[0], Directive::IfChange { .. }));
-        assert!(matches!(directives[1], Directive::ThenChange { .. }));
-    }
-
-    #[test]
-    fn test_parse_malformed_ifchange_error() {
-        let err = parse_directives_from_content("// LINT.IfChange(\n", "x.ts").unwrap_err();
-        assert!(err.to_string().contains("Malformed LINT.IfChange"));
-    }
-
-    #[test]
-    fn test_parse_thenchange_multiline_array() {
-        let content = "/*\nLINT.ThenChange([\n\"a.ts\",\n\"b.ts\",\n])\n*/\n";
-        let directives = parse_directives_from_content(content, "x.ts").unwrap();
-        let targets: Vec<String> = directives
+    fn then_targets(directives: Vec<Directive>) -> Vec<String> {
+        directives
             .into_iter()
             .filter_map(|d| match d {
                 Directive::ThenChange { target, .. } => Some(target),
                 _ => None,
             })
-            .collect();
-        assert_eq!(targets, vec!["a.ts".to_string(), "b.ts".to_string()]);
+            .collect()
     }
 
     #[test]
-    fn test_parse_thenchange_multiline_malformed_error() {
-        let content = "/*\nLINT.ThenChange(\n\"a.ts\"\n*/\n";
-        let err = parse_directives_from_content(content, "x.ts").unwrap_err();
-        assert!(err.to_string().contains("Malformed LINT.ThenChange"));
-    }
-
-    #[test]
-    fn test_parse_thenchange_singleline_array() {
-        let directives =
-            parse_directives_from_content("// LINT.ThenChange([\"a.ts\", \"b.ts\"])\n", "x.ts")
-                .unwrap();
+    fn parse_array_targets_mixed_quotes() {
         assert_eq!(
-            directives
-                .into_iter()
-                .filter(|d| matches!(d, Directive::ThenChange { .. }))
-                .count(),
-            2
+            parse_array_targets(r#"'foo.ts', "bar.ts""#),
+            vec!["foo.ts", "bar.ts"]
         );
     }
 
     #[test]
-    fn test_parse_thenchange_fallback_target() {
+    fn file_directives_missing_file_returns_empty() {
+        assert!(parse_file_directives("/definitely/not/found/file.ts")
+            .unwrap()
+            .is_empty());
+    }
+
+    #[test]
+    fn file_directives_directory_returns_empty() {
+        let dir = TempDir::new().unwrap();
+        assert!(parse_file_directives(dir.path().to_str().unwrap())
+            .unwrap()
+            .is_empty());
+    }
+
+    #[test]
+    fn file_directives_reads_content() {
+        let dir = TempDir::new().unwrap();
+        let file = dir.path().join("a.ts");
+        fs::write(&file, "// LINT.IfChange\n// LINT.ThenChange(\"b.ts\")\n").unwrap();
+        let directives = parse_file_directives(file.to_str().unwrap()).unwrap();
+        assert_eq!(
+            directives,
+            vec![
+                Directive::IfChange {
+                    line: 1,
+                    label: None
+                },
+                Directive::ThenChange {
+                    line: 2,
+                    target: "b.ts".into()
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn malformed_ifchange_error() {
+        let err = parse_directives_from_content("// LINT.IfChange(\n", "x.ts").unwrap_err();
+        assert!(err.to_string().contains("Malformed LINT.IfChange"));
+    }
+
+    #[test]
+    fn thenchange_multiline_array() {
+        let content = "/*\nLINT.ThenChange([\n\"a.ts\",\n\"b.ts\",\n])\n*/\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.ts", "b.ts"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_malformed_error() {
+        let err = parse_directives_from_content("/*\nLINT.ThenChange(\n\"a.ts\"\n*/\n", "x.ts")
+            .unwrap_err();
+        assert!(err.to_string().contains("Malformed LINT.ThenChange"));
+    }
+
+    #[test]
+    fn thenchange_singleline_array() {
+        let directives =
+            parse_directives_from_content("// LINT.ThenChange([\"a.ts\", \"b.ts\"])\n", "x.ts")
+                .unwrap();
+        assert_eq!(then_targets(directives), vec!["a.ts", "b.ts"]);
+    }
+
+    #[test]
+    fn thenchange_fallback_target() {
         let directives =
             parse_directives_from_content("// LINT.ThenChange(foo.ts)\n", "x.ts").unwrap();
-        let target = directives
-            .into_iter()
-            .find_map(|d| match d {
-                Directive::ThenChange { target, .. } => Some(target),
-                _ => None,
-            })
-            .unwrap();
-        assert_eq!(target, "foo.ts");
+        assert_eq!(then_targets(directives), vec!["foo.ts"]);
     }
 
     #[test]
-    fn test_parse_thenchange_multiline_single_target() {
-        let content = "/*\nLINT.ThenChange(\n\"one.ts\"\n)\n*/\n";
-        let directives = parse_directives_from_content(content, "x.ts").unwrap();
-        let target = directives
-            .into_iter()
-            .find_map(|d| match d {
-                Directive::ThenChange { target, .. } => Some(target),
-                _ => None,
-            })
-            .unwrap();
-        assert_eq!(target, "one.ts");
+    fn thenchange_multiline_single_target() {
+        let directives =
+            parse_directives_from_content("/*\nLINT.ThenChange(\n\"one.ts\"\n)\n*/\n", "x.ts")
+                .unwrap();
+        assert_eq!(then_targets(directives), vec!["one.ts"]);
     }
 
     #[test]
-    fn test_parse_thenchange_without_parens_errors() {
+    fn thenchange_without_parens_errors() {
         let err = parse_directives_from_content("// LINT.ThenChange nope\n", "x.ts").unwrap_err();
         assert!(err.to_string().contains("Malformed LINT.ThenChange"));
     }
 
     #[test]
-    fn test_parse_unknown_ifchange_like_directive_error() {
-        let err = parse_directives_from_content("// LINT.IfChanges\n", "x.ts").unwrap_err();
-        assert!(err.to_string().contains("Malformed LINT.IfChange"));
+    fn malformed_directive_errors() {
+        for (input, expected) in [
+            ("// LINT.IfChanges\n", "Malformed LINT.IfChange"),
+            ("// LINT.ThenChanges\n", "Malformed LINT.ThenChange"),
+            ("// LINT.Labels\n", "Malformed LINT.Label"),
+            ("// LINT.Label(\n", "Malformed LINT.Label"),
+        ] {
+            let err = parse_directives_from_content(input, "x.ts").unwrap_err();
+            assert!(err.to_string().contains(expected), "input: {input}");
+        }
     }
 
     #[test]
-    fn test_parse_unknown_thenchange_like_directive_error() {
-        let err = parse_directives_from_content("// LINT.ThenChanges\n", "x.ts").unwrap_err();
-        assert!(err.to_string().contains("Malformed LINT.ThenChange"));
-    }
-
-    #[test]
-    fn test_parse_unknown_label_like_directive_error() {
-        let err = parse_directives_from_content("// LINT.Labels\n", "x.ts").unwrap_err();
-        assert!(err.to_string().contains("Malformed LINT.Label"));
-    }
-
-    #[test]
-    fn test_parse_malformed_label_error() {
-        let err = parse_directives_from_content("// LINT.Label(\n", "x.ts").unwrap_err();
-        assert!(err.to_string().contains("Malformed LINT.Label"));
-    }
-
-    #[test]
-    fn test_parse_unknown_directive_error() {
+    fn unknown_directive_error() {
         let err = parse_directives_from_content("// LINT.Frobulate(\"x\")\n", "x.ts").unwrap_err();
         assert!(err.to_string().contains("Unknown LINT directive"));
     }
 
     #[test]
-    fn test_parse_lint_dot_only_ignored() {
-        let directives = parse_directives_from_content("// LINT.\n", "x.ts").unwrap();
-        assert!(directives.is_empty());
+    fn lint_dot_only_ignored() {
+        assert!(parse_directives_from_content("// LINT.\n", "x.ts")
+            .unwrap()
+            .is_empty());
     }
 
     #[test]
-    fn test_find_map_none_branch_for_non_thenchange() {
+    fn ifchange_then_thenchange_pair() {
         let directives = parse_directives_from_content(
             "// LINT.IfChange\n// LINT.ThenChange(\"x.ts\")\n",
             "x.ts",
         )
         .unwrap();
-        let first_then = directives.into_iter().find_map(|d| match d {
-            Directive::ThenChange { target, .. } => Some(target),
-            _ => None,
-        });
-        assert_eq!(first_then.as_deref(), Some("x.ts"));
+        assert_eq!(then_targets(directives), vec!["x.ts"]);
     }
 }

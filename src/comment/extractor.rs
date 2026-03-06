@@ -1,4 +1,5 @@
 /// A comment extracted from source code.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Comment {
     /// 1-based line number where the comment starts.
     pub start_line: usize,
@@ -422,127 +423,32 @@ fn extract_c_block_only(content: &str) -> Vec<Comment> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_c_line_comments() {
-        let content = "let x = 1; // first\nlet y = 2; // second\n";
-        let comments = extract_comments(content, "ts");
-        assert_eq!(comments.len(), 2);
-        assert_eq!(comments[0].start_line, 1);
-        assert_eq!(comments[0].text, " first");
-        assert_eq!(comments[1].start_line, 2);
-        assert_eq!(comments[1].text, " second");
+    fn c(line: usize, text: &str) -> Comment {
+        Comment {
+            start_line: line,
+            text: text.into(),
+        }
     }
 
     #[test]
-    fn test_c_block_comment() {
-        let content = "/* hello */\ncode\n";
-        let comments = extract_comments(content, "js");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].start_line, 1);
-        assert_eq!(comments[0].text, " hello ");
+    fn c_line_comments() {
+        assert_eq!(
+            extract_comments("let x = 1; // first\nlet y = 2; // second\n", "ts"),
+            vec![c(1, " first"), c(2, " second")],
+        );
     }
 
     #[test]
-    fn test_c_block_multiline() {
-        let content = "/*\n * line1\n * line2\n */\n";
-        let comments = extract_comments(content, "js");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].start_line, 1);
-        assert!(comments[0].text.contains("line1"));
-        assert!(comments[0].text.contains("line2"));
+    fn c_block_comment() {
+        assert_eq!(
+            extract_comments("/* hello */\ncode\n", "js"),
+            vec![c(1, " hello ")],
+        );
     }
 
     #[test]
-    fn test_hash_comments() {
-        let content = "# comment\ncode\n# another\n";
-        let comments = extract_comments(content, "py");
-        assert_eq!(comments.len(), 2);
-        assert_eq!(comments[0].start_line, 1);
-        assert_eq!(comments[0].text, " comment");
-        assert_eq!(comments[1].start_line, 3);
-        assert_eq!(comments[1].text, " another");
-    }
-
-    #[test]
-    fn test_unknown_ext_c_style() {
-        let content = "// c-style\n";
-        let comments = extract_comments(content, "xyz");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].text, " c-style");
-    }
-
-    #[test]
-    fn test_unknown_ext_hash_fallback() {
-        let content = "# hash\n";
-        let comments = extract_comments(content, "xyz");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].text, " hash");
-    }
-
-    #[test]
-    fn test_string_not_treated_as_comment() {
-        let content = "let s = \"// not a comment\";\n// real comment\n";
-        let comments = extract_comments(content, "ts");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].start_line, 2);
-        assert_eq!(comments[0].text, " real comment");
-    }
-
-    #[test]
-    fn test_sql_comments() {
-        let content = "-- line\nSELECT 1;\n/* block */\n";
-        let comments = extract_comments(content, "sql");
-        assert_eq!(comments.len(), 2);
-        assert_eq!(comments[0].text, " line");
-        assert_eq!(comments[1].text, " block ");
-    }
-
-    #[test]
-    fn test_matlab_percent_comments() {
-        let content = "% first\nx = 1;\n";
-        let comments = extract_comments(content, "m");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].text, " first");
-    }
-
-    #[test]
-    fn test_assembly_semicolon_comments() {
-        let content = "; note\nMOV AX, BX\n";
-        let comments = extract_comments(content, "asm");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].text, " note");
-    }
-
-    #[test]
-    fn test_vb_comments() {
-        let content = "' a\nREM b\n";
-        let comments = extract_comments(content, "vb");
-        assert_eq!(comments.len(), 2);
-        assert_eq!(comments[0].text, " a");
-        assert_eq!(comments[1].text, " b");
-    }
-
-    #[test]
-    fn test_fortran_bang_comments() {
-        let content = "! hello\nx = 1\n";
-        let comments = extract_comments(content, "f90");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].text, " hello");
-    }
-
-    #[test]
-    fn test_html_single_line_comment() {
-        let content = "<!-- hello -->\n<p>text</p>\n";
-        let comments = extract_comments(content, "html");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].start_line, 1);
-        assert_eq!(comments[0].text, " hello ");
-    }
-
-    #[test]
-    fn test_html_multiline_comment() {
-        let content = "<!--\n  line1\n  line2\n-->\n";
-        let comments = extract_comments(content, "html");
+    fn c_block_multiline() {
+        let comments = extract_comments("/*\n * line1\n * line2\n */\n", "js");
         assert_eq!(comments.len(), 1);
         assert_eq!(comments[0].start_line, 1);
         assert!(comments[0].text.contains("line1"));
@@ -550,106 +456,167 @@ mod tests {
     }
 
     #[test]
-    fn test_html_multiple_comments() {
-        let content = "<!-- first -->\n<p>gap</p>\n<!-- second -->\n";
-        let comments = extract_comments(content, "html");
-        assert_eq!(comments.len(), 2);
-        assert_eq!(comments[0].text, " first ");
-        assert_eq!(comments[1].text, " second ");
-        assert_eq!(comments[1].start_line, 3);
+    fn hash_comments() {
+        assert_eq!(
+            extract_comments("# comment\ncode\n# another\n", "py"),
+            vec![c(1, " comment"), c(3, " another")],
+        );
     }
 
     #[test]
-    fn test_html_unclosed_comment() {
-        let content = "<!-- unclosed\nstill comment";
-        let comments = extract_comments(content, "html");
+    fn unknown_ext_c_style() {
+        assert_eq!(
+            extract_comments("// c-style\n", "xyz"),
+            vec![c(1, " c-style")]
+        );
+    }
+
+    #[test]
+    fn unknown_ext_hash_fallback() {
+        assert_eq!(extract_comments("# hash\n", "xyz"), vec![c(1, " hash")]);
+    }
+
+    #[test]
+    fn string_not_treated_as_comment() {
+        assert_eq!(
+            extract_comments("let s = \"// not a comment\";\n// real comment\n", "ts"),
+            vec![c(2, " real comment")],
+        );
+    }
+
+    #[test]
+    fn sql_comments() {
+        assert_eq!(
+            extract_comments("-- line\nSELECT 1;\n/* block */\n", "sql"),
+            vec![c(1, " line"), c(3, " block ")],
+        );
+    }
+
+    #[test]
+    fn single_line_style_comments() {
+        assert_eq!(
+            extract_comments("% first\nx = 1;\n", "m"),
+            vec![c(1, " first")]
+        );
+        assert_eq!(
+            extract_comments("; note\nMOV AX, BX\n", "asm"),
+            vec![c(1, " note")]
+        );
+        assert_eq!(
+            extract_comments("! hello\nx = 1\n", "f90"),
+            vec![c(1, " hello")]
+        );
+    }
+
+    #[test]
+    fn vb_comments() {
+        assert_eq!(
+            extract_comments("' a\nREM b\n", "vb"),
+            vec![c(1, " a"), c(2, " b")],
+        );
+    }
+
+    #[test]
+    fn html_single_line_comment() {
+        assert_eq!(
+            extract_comments("<!-- hello -->\n<p>text</p>\n", "html"),
+            vec![c(1, " hello ")],
+        );
+    }
+
+    #[test]
+    fn html_multiline_comment() {
+        let comments = extract_comments("<!--\n  line1\n  line2\n-->\n", "html");
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].start_line, 1);
+        assert!(comments[0].text.contains("line1"));
+        assert!(comments[0].text.contains("line2"));
+    }
+
+    #[test]
+    fn html_multiple_comments() {
+        assert_eq!(
+            extract_comments("<!-- first -->\n<p>gap</p>\n<!-- second -->\n", "html"),
+            vec![c(1, " first "), c(3, " second ")],
+        );
+    }
+
+    #[test]
+    fn html_unclosed_comment() {
+        let comments = extract_comments("<!-- unclosed\nstill comment", "html");
         assert_eq!(comments.len(), 1);
         assert!(comments[0].text.contains("unclosed"));
     }
 
     #[test]
-    fn test_markdown_uses_html_comments() {
-        let content = "<!-- LINT.IfChange -->\nsome text\n<!-- LINT.ThenChange(\"other.md\") -->\n";
-        let comments = extract_comments(content, "md");
+    fn markdown_uses_html_comments() {
+        let comments = extract_comments(
+            "<!-- LINT.IfChange -->\nsome text\n<!-- LINT.ThenChange(\"other.md\") -->\n",
+            "md",
+        );
         assert_eq!(comments.len(), 2);
         assert!(comments[0].text.contains("LINT.IfChange"));
         assert!(comments[1].text.contains("LINT.ThenChange"));
     }
 
     #[test]
-    fn test_xml_uses_html_comments() {
-        let content = "<!-- comment -->\n<root/>\n";
-        let comments = extract_comments(content, "xml");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].text, " comment ");
+    fn html_style_extensions() {
+        for ext in ["xml", "svg", "htm"] {
+            let comments = extract_comments("<!-- note -->\n", ext);
+            assert_eq!(comments.len(), 1, "failed for ext: {ext}");
+        }
     }
 
     #[test]
-    fn test_svg_uses_html_comments() {
-        let content = "<!-- note -->\n<svg/>\n";
-        let comments = extract_comments(content, "svg");
-        assert_eq!(comments.len(), 1);
+    fn gitignore_uses_hash_comments() {
+        assert_eq!(
+            extract_comments(
+                "# Build output\ntarget/\n# Dependencies\nnode_modules/\n",
+                "gitignore"
+            ),
+            vec![c(1, " Build output"), c(3, " Dependencies")],
+        );
     }
 
     #[test]
-    fn test_htm_uses_html_comments() {
-        let content = "<!-- hi -->\n";
-        let comments = extract_comments(content, "htm");
-        assert_eq!(comments.len(), 1);
+    fn c_style_escaped_quote_in_string() {
+        assert_eq!(
+            extract_comments("let s = \"hello \\\" // nope\";\n// yes\n", "js"),
+            vec![c(2, " yes")],
+        );
     }
 
     #[test]
-    fn test_gitignore_uses_hash_comments() {
-        let content = "# Build output\ntarget/\n# Dependencies\nnode_modules/\n";
-        let comments = extract_comments(content, "gitignore");
-        assert_eq!(comments.len(), 2);
-        assert_eq!(comments[0].text, " Build output");
-        assert_eq!(comments[1].text, " Dependencies");
+    fn c_style_string_with_newline_tracking() {
+        assert_eq!(
+            extract_comments("\"line1\\\nline2\"\n// comment\n", "js"),
+            vec![c(3, " comment")],
+        );
     }
 
     #[test]
-    fn test_c_style_escaped_quote_in_string() {
-        let content = "let s = \"hello \\\" // nope\";\n// yes\n";
-        let comments = extract_comments(content, "js");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].start_line, 2);
-    }
-
-    #[test]
-    fn test_c_style_string_with_newline_tracking() {
-        let content = "\"line1\\\nline2\"\n// comment\n";
-        let comments = extract_comments(content, "js");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].start_line, 3);
-    }
-
-    #[test]
-    fn test_c_style_unclosed_block_comment() {
-        let content = "code\n/* unterminated\nstill comment";
-        let comments = extract_comments(content, "js");
+    fn c_style_unclosed_block_comment() {
+        let comments = extract_comments("code\n/* unterminated\nstill comment", "js");
         assert_eq!(comments.len(), 1);
         assert!(comments[0].text.contains("unterminated"));
     }
 
     #[test]
-    fn test_c_style_slash_non_comment() {
-        let content = "a / b\n";
-        let comments = extract_comments(content, "js");
-        assert!(comments.is_empty());
+    fn c_style_slash_non_comment() {
+        assert!(extract_comments("a / b\n", "js").is_empty());
     }
 
     #[test]
-    fn test_clean_block_comment_star_variants() {
-        let content = "/*\n*\n*abc\n*/\n";
-        let comments = extract_comments(content, "js");
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].text, "\n\nabc");
+    fn clean_block_comment_star_variants() {
+        assert_eq!(
+            extract_comments("/*\n*\n*abc\n*/\n", "js"),
+            vec![c(1, "\n\nabc")],
+        );
     }
 
     #[test]
-    fn test_sql_block_comment_unclosed() {
-        let content = "/* sql\nunterminated";
-        let comments = extract_comments(content, "sql");
+    fn sql_block_comment_unclosed() {
+        let comments = extract_comments("/* sql\nunterminated", "sql");
         assert_eq!(comments.len(), 1);
         assert!(comments[0].text.contains("unterminated"));
     }

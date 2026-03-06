@@ -54,22 +54,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_resolve_target_path_self() {
+    fn resolve_target_path_self() {
         assert_eq!(resolve_target_path("src/foo.rs", ""), "src/foo.rs");
     }
 
     #[test]
-    fn test_resolve_target_path_relative() {
+    fn resolve_target_path_relative() {
         assert_eq!(resolve_target_path("src/foo.rs", "bar.rs"), "src/bar.rs");
     }
 
     #[test]
-    fn test_normalize_path() {
+    fn normalize_path() {
         assert_eq!(normalize_path_str("src/sub/../bar.rs"), "src/bar.rs");
     }
 
     #[test]
-    fn test_format_if_context() {
+    fn format_if_context_variants() {
         assert_eq!(format_if_context("f.rs", None, 42), "[ifttt] f.rs:42");
         assert_eq!(
             format_if_context("f.rs", Some("lbl"), 42),

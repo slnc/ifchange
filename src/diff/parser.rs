@@ -253,46 +253,50 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_decode_octal_escapes() {
-        // Magnifying glass emoji: U+1F50E = \360\237\224\216 in UTF-8 octals
-        let input = r"\360\237\224\216";
-        let decoded = decode_octal_escapes(input);
-        assert_eq!(decoded, "\u{1F50E}");
+    fn decode_octal_emoji() {
+        assert_eq!(decode_octal_escapes(r"\360\237\224\216"), "\u{1F50E}");
     }
 
     #[test]
-    fn test_decode_octal_mixed() {
-        let input = r"path/to/\303\251file.txt";
-        let decoded = decode_octal_escapes(input);
-        assert_eq!(decoded, "path/to/\u{00E9}file.txt");
+    fn decode_octal_mixed() {
+        assert_eq!(
+            decode_octal_escapes(r"path/to/\303\251file.txt"),
+            "path/to/\u{00E9}file.txt"
+        );
     }
 
     #[test]
-    fn test_strip_quotes() {
+    fn decode_octal_invalid_digits_kept() {
+        assert_eq!(decode_octal_escapes(r"\398.txt"), r"\398.txt");
+    }
+
+    #[test]
+    fn strip_quotes_variants() {
         assert_eq!(strip_quotes("\"hello\""), "hello");
         assert_eq!(strip_quotes("hello"), "hello");
         assert_eq!(strip_quotes("\"\""), "");
     }
 
     #[test]
-    fn test_strip_prefix_dir() {
+    fn strip_prefix_dir_variants() {
         assert_eq!(strip_prefix_dir("a/src/main.rs"), "src/main.rs");
         assert_eq!(strip_prefix_dir("b/src/main.rs"), "src/main.rs");
         assert_eq!(strip_prefix_dir("src/main.rs"), "src/main.rs");
     }
 
     #[test]
-    fn test_parse_hunk_header() {
+    fn hunk_header_parsing() {
         assert_eq!(parse_hunk_header("@@ -10,5 +20,8 @@"), (10, 20));
         assert_eq!(parse_hunk_header("@@ -1 +1 @@"), (1, 1));
         assert_eq!(
             parse_hunk_header("@@ -100,3 +200,7 @@ fn main()"),
             (100, 200)
         );
+        assert_eq!(parse_hunk_header("@@ -7,1 +9,2"), (7, 9));
     }
 
     #[test]
-    fn test_simple_diff() {
+    fn simple_diff() {
         let diff = "\
 diff --git a/foo.txt b/foo.txt
 index abc1234..def5678 100644
@@ -312,7 +316,7 @@ index abc1234..def5678 100644
     }
 
     #[test]
-    fn test_deleted_file_skipped() {
+    fn deleted_file_skipped() {
         let diff = "\
 diff --git a/removed.txt b/removed.txt
 deleted file mode 100644
@@ -322,12 +326,11 @@ deleted file mode 100644
 -line1
 -line2
 ";
-        let result = parse_changed_lines(diff);
-        assert!(result.is_empty());
+        assert!(parse_changed_lines(diff).is_empty());
     }
 
     #[test]
-    fn test_multiple_files() {
+    fn multiple_files() {
         let diff = "\
 diff --git a/a.txt b/a.txt
 --- a/a.txt
@@ -346,16 +349,12 @@ diff --git a/b.txt b/b.txt
 ";
         let result = parse_changed_lines(diff);
         assert_eq!(result.len(), 2);
-
-        let a = result.get("a.txt").unwrap();
-        assert!(a.added_lines.contains(&2));
-
-        let b = result.get("b.txt").unwrap();
-        assert!(b.removed_lines.contains(&2));
+        assert!(result.get("a.txt").unwrap().added_lines.contains(&2));
+        assert!(result.get("b.txt").unwrap().removed_lines.contains(&2));
     }
 
     #[test]
-    fn test_binary_file_skipped_gracefully() {
+    fn binary_file_skipped_gracefully() {
         let diff = "\
 diff --git a/image.png b/image.png
 --- a/image.png
@@ -363,7 +362,6 @@ diff --git a/image.png b/image.png
 Binary files a/image.png and b/image.png differ
 ";
         let result = parse_changed_lines(diff);
-        // Binary file entry exists but has no line changes.
         if let Some(changes) = result.get("image.png") {
             assert!(changes.added_lines.is_empty());
             assert!(changes.removed_lines.is_empty());
@@ -371,7 +369,7 @@ Binary files a/image.png and b/image.png differ
     }
 
     #[test]
-    fn test_quoted_path_with_octal() {
+    fn quoted_path_with_octal() {
         let diff = "\
 diff --git a/file b/file
 --- \"a/caf\\303\\251.txt\"
@@ -381,19 +379,11 @@ diff --git a/file b/file
 +added
  line2
 ";
-        let result = parse_changed_lines(diff);
-        assert!(result.contains_key("caf\u{00E9}.txt"));
+        assert!(parse_changed_lines(diff).contains_key("caf\u{00E9}.txt"));
     }
 
     #[test]
-    fn test_decode_octal_invalid_digits_kept() {
-        let input = r"\398.txt";
-        let decoded = decode_octal_escapes(input);
-        assert_eq!(decoded, r"\398.txt");
-    }
-
-    #[test]
-    fn test_hunk_no_newline_marker_is_ignored() {
+    fn hunk_no_newline_marker_ignored() {
         let diff = "\
 --- a/foo.txt
 +++ b/foo.txt
@@ -402,26 +392,19 @@ diff --git a/file b/file
 +line1
 \\ No newline at end of file
 ";
-        let result = parse_changed_lines(diff);
-        let changes = result.get("foo.txt").unwrap();
+        let changes = parse_changed_lines(diff).remove("foo.txt").unwrap();
         assert!(changes.added_lines.contains(&1));
         assert!(changes.removed_lines.contains(&1));
     }
 
     #[test]
-    fn test_unmatched_minus_header_is_skipped() {
+    fn unmatched_minus_header_skipped() {
         let diff = "\
 --- a/foo.txt
 @@ -1 +1 @@
 -a
 +b
 ";
-        let result = parse_changed_lines(diff);
-        assert!(result.is_empty());
-    }
-
-    #[test]
-    fn test_parse_hunk_header_without_closing_marker() {
-        assert_eq!(parse_hunk_header("@@ -7,1 +9,2"), (7, 9));
+        assert!(parse_changed_lines(diff).is_empty());
     }
 }

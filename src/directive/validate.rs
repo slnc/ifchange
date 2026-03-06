@@ -32,52 +32,39 @@ pub fn validate_directive_uniqueness(directives: &[Directive], file_path: &str) 
 mod tests {
     use super::*;
 
+    fn if_change(line: usize, label: Option<&str>) -> Directive {
+        Directive::IfChange {
+            line,
+            label: label.map(str::to_owned),
+        }
+    }
+
+    fn label(line: usize, name: &str) -> Directive {
+        Directive::Label {
+            line,
+            name: name.to_owned(),
+        }
+    }
+
     #[test]
-    fn test_validate_uniqueness_no_duplicates() {
-        let directives = vec![
-            Directive::IfChange {
-                line: 1,
-                label: Some("a".to_string()),
-            },
-            Directive::Label {
-                line: 5,
-                name: "b".to_string(),
-            },
-        ];
-        let errors = validate_directive_uniqueness(&directives, "test.ts");
+    fn no_duplicates() {
+        let errors =
+            validate_directive_uniqueness(&[if_change(1, Some("a")), label(5, "b")], "test.ts");
         assert!(errors.is_empty());
     }
 
     #[test]
-    fn test_validate_uniqueness_duplicate_label() {
-        let directives = vec![
-            Directive::IfChange {
-                line: 1,
-                label: Some("a".to_string()),
-            },
-            Directive::Label {
-                line: 5,
-                name: "a".to_string(),
-            },
-        ];
-        let errors = validate_directive_uniqueness(&directives, "test.ts");
+    fn duplicate_label() {
+        let errors =
+            validate_directive_uniqueness(&[if_change(1, Some("a")), label(5, "a")], "test.ts");
         assert_eq!(errors.len(), 1);
         assert!(errors[0].contains("duplicate directive label 'a'"));
     }
 
     #[test]
-    fn test_validate_uniqueness_skips_bare_ifchange() {
-        let directives = vec![
-            Directive::IfChange {
-                line: 1,
-                label: None,
-            },
-            Directive::IfChange {
-                line: 10,
-                label: None,
-            },
-        ];
-        let errors = validate_directive_uniqueness(&directives, "test.ts");
+    fn skips_bare_ifchange() {
+        let errors =
+            validate_directive_uniqueness(&[if_change(1, None), if_change(10, None)], "test.ts");
         assert!(errors.is_empty());
     }
 }
