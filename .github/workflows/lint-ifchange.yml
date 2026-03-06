@@ -1,0 +1,12 @@
+name: Lint IfChange
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint-ifchange:
+    uses: ./.github/workflows/ifttt-lint-reusable.yml
+    with:
+      binary_source: cargo
