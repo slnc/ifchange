@@ -180,33 +180,14 @@ pub fn lint_diff(diff_text: &str, verbose: bool, ignore_list: &[String]) -> Lint
             continue;
         }
 
-        let source_index = match file_indices.get(&p.file) {
-            Some(index) => index,
-            None => continue,
-        };
-
         let source_changed = match changed_lines_map.get(&p.file) {
             Some(lines) => lines,
             None => continue,
         };
 
-        let target_has_if_blocks = file_indices
-            .get(&p.then_target_path)
-            .map(|idx| idx.has_if_blocks)
-            .unwrap_or(false);
-
-        let triggered = if target_has_if_blocks {
-            source_changed.iter().any(|&line| {
-                source_index
-                    .if_blocks
-                    .iter()
-                    .any(|&(start, end)| line >= start && line <= end)
-            })
-        } else {
-            source_changed
-                .iter()
-                .any(|&line| line >= p.if_line && line <= p.then_line)
-        };
+        let triggered = source_changed
+            .iter()
+            .any(|&line| line >= p.if_line && line <= p.then_line);
 
         if !triggered {
             continue;

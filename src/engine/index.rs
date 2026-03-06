@@ -31,11 +31,7 @@ pub(super) fn index_changed_file(file: &str) -> Result<ChangedFileOutcome, Strin
     Ok(ChangedFileOutcome {
         index: FileIndex {
             pairs,
-            if_blocks: get_if_change_blocks(&directives),
             label_ranges: build_label_ranges(&directives),
-            has_if_blocks: directives
-                .iter()
-                .any(|d| matches!(d, Directive::IfChange { .. })),
         },
         orphan_then,
         orphan_if,
@@ -57,11 +53,7 @@ pub(super) fn index_target_file(file: &str) -> TargetLoad {
     TargetLoad::Parsed {
         index: FileIndex {
             pairs: Vec::new(),
-            if_blocks: get_if_change_blocks(&directives),
             label_ranges: build_label_ranges(&directives),
-            has_if_blocks: directives
-                .iter()
-                .any(|d| matches!(d, Directive::IfChange { .. })),
         },
         uniqueness_errors,
     }
@@ -175,27 +167,6 @@ fn build_label_ranges(directives: &[Directive]) -> HashMap<String, LineRange> {
     }
 
     ranges
-}
-
-fn get_if_change_blocks(directives: &[Directive]) -> Vec<(usize, usize)> {
-    let mut blocks = Vec::new();
-    let mut current_if: Option<usize> = None;
-
-    for d in directives {
-        match d {
-            Directive::IfChange { line, .. } => {
-                current_if = Some(*line);
-            }
-            Directive::ThenChange { line, .. } => {
-                if let Some(if_line) = current_if.take() {
-                    blocks.push((if_line, *line));
-                }
-            }
-            _ => {}
-        }
-    }
-
-    blocks
 }
 
 #[cfg(test)]

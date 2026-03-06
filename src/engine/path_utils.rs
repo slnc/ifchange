@@ -12,8 +12,9 @@ pub(super) fn resolve_target_path(source_file: &str, target_name: &str) -> Strin
     if target_name.is_empty() {
         return source_file.to_string();
     }
-    if Path::new(target_name).is_absolute() {
-        return target_name.to_string();
+    if let Some(stripped) = target_name.strip_prefix('/') {
+        // Treat leading slash as repo-root-relative, not filesystem-absolute.
+        return normalize_path_str(stripped);
     }
     let source_dir = Path::new(source_file)
         .parent()
@@ -66,6 +67,21 @@ mod tests {
     #[test]
     fn normalize_path() {
         assert_eq!(normalize_path_str("src/sub/../bar.rs"), "src/bar.rs");
+    }
+
+    // BUG 3: Leading slash should be treated as repo-root-relative.
+    #[test]
+    fn resolve_target_path_leading_slash_is_repo_root() {
+        // From sub/a.py, ThenChange("/lib/b.py") should resolve to "lib/b.py"
+        assert_eq!(resolve_target_path("sub/a.py", "/lib/b.py"), "lib/b.py");
+    }
+
+    #[test]
+    fn resolve_target_path_leading_slash_normalized() {
+        assert_eq!(
+            resolve_target_path("deep/nested/a.py", "/src/./b.py"),
+            "src/b.py"
+        );
     }
 
     #[test]

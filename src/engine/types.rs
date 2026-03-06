@@ -16,9 +16,7 @@ pub(super) struct Pair {
 #[derive(Debug, Clone)]
 pub(super) struct FileIndex {
     pub(super) pairs: Vec<Pair>,
-    pub(super) if_blocks: Vec<(usize, usize)>,
     pub(super) label_ranges: HashMap<String, LineRange>,
-    pub(super) has_if_blocks: bool,
 }
 
 #[derive(Debug)]

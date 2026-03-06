@@ -128,7 +128,7 @@ pub fn parse_changed_lines(diff_text: &str) -> HashMap<String, FileChanges> {
                 }
 
                 let decoded = decode_octal_escapes(plus_path_raw);
-                let file_path = strip_prefix_dir(&decoded).to_string();
+                let file_path = strip_prefix_dir(&decoded).trim_end().to_string();
 
                 // Move past the --- and +++ lines.
                 i += 2;
@@ -434,5 +434,17 @@ diff --git a/file b/file
         // Empty lines and just whitespace
         let empty = "\n\n\n   \n\t\n";
         assert!(parse_changed_lines(empty).is_empty());
+    }
+
+    // BUG 2: git appends trailing tab to ---/+++ lines for paths with spaces.
+    #[test]
+    fn trailing_tab_stripped_from_filenames() {
+        let diff = "--- a/my dir/file.py\t\n+++ b/my dir/file.py\t\n@@ -1 +1 @@\n-old\n+new\n";
+        let result = parse_changed_lines(diff);
+        assert!(
+            result.contains_key("my dir/file.py"),
+            "should strip trailing tab; keys: {:?}",
+            result.keys().collect::<Vec<_>>()
+        );
     }
 }

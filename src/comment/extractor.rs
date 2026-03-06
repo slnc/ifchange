@@ -7,12 +7,22 @@ pub struct Comment {
     pub text: String,
 }
 
+// LINT.IfChange
 /// Extensions that support C-style comments (`//` and `/* */`).
 const C_STYLE_EXTS: &[&str] = &[
     "ts", "js", "java", "c", "cpp", "go", "rs", "php", "swift", "kt", "scala", "tsx", "mts", "cjs",
     "jsx", "mjs", "cs", "cc", "cxx", "c++", "h", "hpp", "hh", "hxx", "dart", "groovy", "gradle",
-    "kts", "fs", "fsx", "fsi", "zig", "gleam",
+    "kts", "zig", "v", "sv", "proto", "thrift", "jsonc", "mm", "scss", "less", "styl",
 ];
+
+/// Extensions that support only C-style block comments (`/* */`), not `//`.
+const C_BLOCK_ONLY_EXTS: &[&str] = &["css"];
+
+/// Extensions that support only `//` line comments (no block comments).
+const C_LINE_ONLY_EXTS: &[&str] = &["sass", "gleam"];
+
+/// Extensions that support `//` line comments and `(* *)` block comments (F#).
+const SLASH_PAREN_BLOCK_EXTS: &[&str] = &["fs", "fsx", "fsi"];
 
 /// Extensions that support hash-style comments (`#`).
 const HASH_STYLE_EXTS: &[&str] = &[
@@ -37,31 +47,52 @@ const HASH_STYLE_EXTS: &[&str] = &[
     "gd",
     "mojo",
     "gitignore",
+    "tf",
+    "tfvars",
+    "hcl",
+    "cmake",
+    "conf",
+    "ini",
+    "env",
+    "dockerfile",
+    "mk",
+    "nix",
+    "jl",
+    "cr",
+    "nim",
 ];
 
 /// Extensions that support `--` line comments (and optionally C-style `/* */` blocks).
-const DASH_STYLE_EXTS: &[&str] = &["sql", "lua"];
+const DASH_STYLE_EXTS: &[&str] = &["sql", "lua", "hs", "ada", "adb", "ads", "vhdl", "vhd"];
 
 /// Extensions that support `%` line comments.
-const PERCENT_STYLE_EXTS: &[&str] = &["m", "erl", "hrl", "pro", "prolog"];
+const PERCENT_STYLE_EXTS: &[&str] = &["m", "erl", "hrl", "pro", "prolog", "tex", "latex", "sty"];
 
 /// Extensions that support `;` line comments.
-const SEMICOLON_STYLE_EXTS: &[&str] = &["asm", "s", "lisp", "lsp", "cl", "scm"];
+const SEMICOLON_STYLE_EXTS: &[&str] = &[
+    "asm", "s", "lisp", "lsp", "cl", "scm", "rkt", "clj", "cljs", "cljc", "el",
+];
 
 /// Extensions that support apostrophe (`'`) comments.
-const APOSTROPHE_STYLE_EXTS: &[&str] = &["vb", "vba", "bas", "cls"];
+const APOSTROPHE_STYLE_EXTS: &[&str] = &["vb", "vba", "bas", "cls", "bat", "cmd"];
 
 /// Extensions that support `!` comments.
 const BANG_STYLE_EXTS: &[&str] = &["f", "for", "f90", "f95", "f03", "f08"];
 
 /// Extensions that support HTML-style comments (`<!-- -->`).
-const HTML_STYLE_EXTS: &[&str] = &["html", "htm", "xml", "svg", "md"];
+const HTML_STYLE_EXTS: &[&str] = &[
+    "html", "htm", "xml", "svg", "md", "vue", "svelte", "xsl", "xslt", "jsp", "erb",
+];
+// LINT.ThenChange("../../README.md#supported-languages")
 
 /// Extract all comments from `content`, using the comment style implied by `file_ext`
 /// (without the leading dot).
 ///
 /// Returns a `Vec<Comment>` with 1-based line numbers.
 pub fn extract_comments(content: &str, file_ext: &str) -> Vec<Comment> {
+    // Strip UTF-8 BOM if present.
+    let content = content.strip_prefix('\u{FEFF}').unwrap_or(content);
+
     let ext = file_ext
         .strip_prefix('.')
         .unwrap_or(file_ext)
@@ -72,6 +103,12 @@ pub fn extract_comments(content: &str, file_ext: &str) -> Vec<Comment> {
         extract_html_style(content)
     } else if C_STYLE_EXTS.contains(&ext) {
         extract_c_style(content)
+    } else if C_BLOCK_ONLY_EXTS.contains(&ext) {
+        extract_c_block_only(content)
+    } else if C_LINE_ONLY_EXTS.contains(&ext) {
+        extract_c_line_only(content)
+    } else if SLASH_PAREN_BLOCK_EXTS.contains(&ext) {
+        extract_slash_paren_block(content)
     } else if HASH_STYLE_EXTS.contains(&ext) {
         extract_hash_style(content)
     } else if DASH_STYLE_EXTS.contains(&ext) {
@@ -336,6 +373,181 @@ fn extract_prefixed_line_comments(content: &str, prefix: &str) -> Vec<Comment> {
             });
         }
     }
+    comments
+}
+
+/// Extract only `//` line comments (no block comment support).
+fn extract_c_line_only(content: &str) -> Vec<Comment> {
+    let mut comments = Vec::new();
+    let mut chars = content.char_indices().peekable();
+    let mut line: usize = 1;
+    let mut in_string: Option<char> = None;
+
+    while let Some(&(_i, ch)) = chars.peek() {
+        if let Some(quote) = in_string {
+            chars.next();
+            if ch == '\\' {
+                if chars.peek().is_some() {
+                    let next = chars.next().unwrap().1;
+                    if next == '\n' {
+                        line += 1;
+                    }
+                }
+            } else if ch == quote {
+                in_string = None;
+            } else if ch == '\n' {
+                line += 1;
+            }
+            continue;
+        }
+
+        match ch {
+            '"' | '\'' | '`' => {
+                in_string = Some(ch);
+                chars.next();
+            }
+            '/' => {
+                chars.next();
+                if let Some('/') = chars.peek().map(|&(_, c)| c) {
+                    chars.next(); // consume second '/'
+                    let start = match chars.peek() {
+                        Some(&(idx, _)) => idx,
+                        None => content.len(),
+                    };
+                    let comment_line = line;
+                    while let Some(&(_, c)) = chars.peek() {
+                        if c == '\n' {
+                            break;
+                        }
+                        chars.next();
+                    }
+                    let end = match chars.peek() {
+                        Some(&(idx, _)) => idx,
+                        None => content.len(),
+                    };
+                    comments.push(Comment {
+                        start_line: comment_line,
+                        text: content[start..end].to_string(),
+                    });
+                }
+            }
+            '\n' => {
+                line += 1;
+                chars.next();
+            }
+            _ => {
+                chars.next();
+            }
+        }
+    }
+
+    comments
+}
+
+/// Extract `//` line comments and `(* ... *)` block comments (F#-style).
+fn extract_slash_paren_block(content: &str) -> Vec<Comment> {
+    let mut comments = Vec::new();
+    let mut chars = content.char_indices().peekable();
+    let mut line: usize = 1;
+    let mut in_string: Option<char> = None;
+
+    while let Some(&(_i, ch)) = chars.peek() {
+        if let Some(quote) = in_string {
+            chars.next();
+            if ch == '\\' {
+                if chars.peek().is_some() {
+                    let next = chars.next().unwrap().1;
+                    if next == '\n' {
+                        line += 1;
+                    }
+                }
+            } else if ch == quote {
+                in_string = None;
+            } else if ch == '\n' {
+                line += 1;
+            }
+            continue;
+        }
+
+        match ch {
+            '"' | '\'' => {
+                in_string = Some(ch);
+                chars.next();
+            }
+            '/' => {
+                chars.next();
+                if let Some('/') = chars.peek().map(|&(_, c)| c) {
+                    // Line comment.
+                    chars.next();
+                    let start = match chars.peek() {
+                        Some(&(idx, _)) => idx,
+                        None => content.len(),
+                    };
+                    let comment_line = line;
+                    while let Some(&(_, c)) = chars.peek() {
+                        if c == '\n' {
+                            break;
+                        }
+                        chars.next();
+                    }
+                    let end = match chars.peek() {
+                        Some(&(idx, _)) => idx,
+                        None => content.len(),
+                    };
+                    comments.push(Comment {
+                        start_line: comment_line,
+                        text: content[start..end].to_string(),
+                    });
+                }
+            }
+            '(' => {
+                chars.next();
+                if let Some('*') = chars.peek().map(|&(_, c)| c) {
+                    // Block comment (* ... *)
+                    chars.next(); // consume '*'
+                    let start = match chars.peek() {
+                        Some(&(idx, _)) => idx,
+                        None => content.len(),
+                    };
+                    let comment_line = line;
+                    let mut end = content.len();
+                    let mut found_end = false;
+                    while let Some(&(_, c)) = chars.peek() {
+                        if c == '\n' {
+                            line += 1;
+                            chars.next();
+                        } else if c == '*' {
+                            let star_pos = chars.peek().map(|&(idx, _)| idx).unwrap();
+                            chars.next();
+                            if let Some(&(_, ')')) = chars.peek() {
+                                end = star_pos;
+                                chars.next(); // consume ')'
+                                found_end = true;
+                                break;
+                            }
+                        } else {
+                            chars.next();
+                        }
+                    }
+                    if !found_end {
+                        end = content.len();
+                    }
+                    comments.push(Comment {
+                        start_line: comment_line,
+                        text: content[start..end].to_string(),
+                    });
+                }
+            }
+            '\n' => {
+                line += 1;
+                chars.next();
+            }
+            _ => {
+                chars.next();
+            }
+        }
+    }
+
     comments
 }
 
@@ -619,6 +831,215 @@ mod tests {
         let comments = extract_comments("/* sql\nunterminated", "sql");
         assert_eq!(comments.len(), 1);
         assert!(comments[0].text.contains("unterminated"));
+    }
+
+    #[test]
+    fn c_style_new_extensions() {
+        for ext in [
+            "v", "sv", "proto", "thrift", "jsonc", "mm", "scss", "less", "styl",
+        ] {
+            assert_eq!(
+                extract_comments("// note\ncode\n", ext),
+                vec![c(1, " note")],
+                "failed for ext: {ext}",
+            );
+            assert_eq!(
+                extract_comments("/* block */\ncode\n", ext),
+                vec![c(1, " block ")],
+                "block comment failed for ext: {ext}",
+            );
+        }
+    }
+
+    #[test]
+    fn css_block_only() {
+        // CSS only supports /* */ comments, not //
+        assert_eq!(
+            extract_comments("/* LINT.IfChange */\ncode\n", "css"),
+            vec![c(1, " LINT.IfChange ")],
+        );
+        assert!(
+            extract_comments("// not a comment\ncode\n", "css").is_empty(),
+            "CSS should not recognize // comments",
+        );
+    }
+
+    #[test]
+    fn css_block_multiline() {
+        let comments = extract_comments("/*\n * line1\n * line2\n */\n", "css");
+        assert_eq!(comments.len(), 1);
+        assert!(comments[0].text.contains("line1"));
+        assert!(comments[0].text.contains("line2"));
+    }
+
+    #[test]
+    fn sass_line_only() {
+        // SASS (indented syntax) supports // but not /* */
+        assert_eq!(
+            extract_comments("// LINT.IfChange\ncode\n", "sass"),
+            vec![c(1, " LINT.IfChange")],
+        );
+        assert!(
+            extract_comments("/* not a comment */\ncode\n", "sass").is_empty(),
+            "SASS should not recognize /* */ comments",
+        );
+    }
+
+    #[test]
+    fn gleam_line_only() {
+        // Gleam only supports //
+        assert_eq!(
+            extract_comments("// LINT.IfChange\ncode\n", "gleam"),
+            vec![c(1, " LINT.IfChange")],
+        );
+        assert!(
+            extract_comments("/* not a comment */\ncode\n", "gleam").is_empty(),
+            "Gleam should not recognize /* */ comments",
+        );
+    }
+
+    #[test]
+    fn fsharp_slash_comments() {
+        // F# supports // line comments
+        for ext in ["fs", "fsx", "fsi"] {
+            assert_eq!(
+                extract_comments("// LINT.IfChange\ncode\n", ext),
+                vec![c(1, " LINT.IfChange")],
+                "// comment failed for ext: {ext}",
+            );
+        }
+    }
+
+    #[test]
+    fn fsharp_paren_block_comments() {
+        // F# supports (* *) block comments, not /* */
+        for ext in ["fs", "fsx", "fsi"] {
+            assert_eq!(
+                extract_comments("(* LINT.IfChange *)\ncode\n", ext),
+                vec![c(1, " LINT.IfChange ")],
+                "(* *) block comment failed for ext: {ext}",
+            );
+            assert!(
+                extract_comments("/* not a comment */\ncode\n", ext).is_empty(),
+                "F# should not recognize /* */ comments for ext: {ext}",
+            );
+        }
+    }
+
+    #[test]
+    fn fsharp_paren_block_multiline() {
+        let comments = extract_comments("(*\n  line1\n  line2\n*)\n", "fs");
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].start_line, 1);
+        assert!(comments[0].text.contains("line1"));
+        assert!(comments[0].text.contains("line2"));
+    }
+
+    #[test]
+    fn fsharp_paren_block_unclosed() {
+        let comments = extract_comments("(* unclosed\nstill comment", "fs");
+        assert_eq!(comments.len(), 1);
+        assert!(comments[0].text.contains("unclosed"));
+    }
+
+    #[test]
+    fn hash_style_new_extensions() {
+        for ext in [
+            "tf",
+            "tfvars",
+            "hcl",
+            "cmake",
+            "conf",
+            "ini",
+            "env",
+            "dockerfile",
+            "mk",
+            "nix",
+            "jl",
+            "cr",
+            "nim",
+        ] {
+            assert_eq!(
+                extract_comments("# note\ncode\n", ext),
+                vec![c(1, " note")],
+                "failed for ext: {ext}",
+            );
+        }
+    }
+
+    #[test]
+    fn html_style_new_extensions() {
+        for ext in ["vue", "svelte", "xsl", "xslt", "jsp", "erb"] {
+            assert_eq!(
+                extract_comments("<!-- note -->\n<div/>\n", ext),
+                vec![c(1, " note ")],
+                "failed for ext: {ext}",
+            );
+        }
+    }
+
+    #[test]
+    fn dash_style_new_extensions() {
+        for ext in ["hs", "ada", "adb", "ads", "vhdl", "vhd"] {
+            assert_eq!(
+                extract_comments("-- note\ncode\n", ext),
+                vec![c(1, " note")],
+                "failed for ext: {ext}",
+            );
+        }
+    }
+
+    #[test]
+    fn semicolon_style_new_extensions() {
+        for ext in ["rkt", "clj", "cljs", "cljc", "el"] {
+            assert_eq!(
+                extract_comments("; note\ncode\n", ext),
+                vec![c(1, " note")],
+                "failed for ext: {ext}",
+            );
+        }
+    }
+
+    #[test]
+    fn bat_cmd_rem_comments() {
+        for ext in ["bat", "cmd"] {
+            assert_eq!(
+                extract_comments("REM note\necho hello\n", ext),
+                vec![c(1, " note")],
+                "failed for ext: {ext}",
+            );
+        }
+    }
+
+    // BUG 4: UTF-8 BOM should not break comment extraction.
+    #[test]
+    fn bom_stripped_hash_comments() {
+        let content = "\u{FEFF}# LINT.IfChange\nVALUE = 1\n# LINT.ThenChange(\"other.py\")\n";
+        let comments = extract_comments(content, "py");
+        assert!(
+            comments.iter().any(|c| c.text.contains("LINT.IfChange")),
+            "BOM should not prevent hash comment extraction: {:?}",
+            comments
+        );
+    }
+
+    // BUG 6: .tex and .el extensions should be recognized.
+    #[test]
+    fn tex_percent_comments() {
+        for ext in ["tex", "latex", "sty"] {
+            let comments = extract_comments("% LINT.IfChange\ncode\n", ext);
+            assert_eq!(
+                comments,
+                vec![c(1, " LINT.IfChange")],
+                "failed for ext: {ext}",
+            );
+        }
+    }
+
+    #[test]
+    fn el_semicolon_comments() {
+        let comments = extract_comments("; LINT.IfChange\ncode\n", "el");
+        assert_eq!(comments, vec![c(1, " LINT.IfChange")]);
     }
 
     #[test]

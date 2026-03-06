@@ -205,6 +205,18 @@ pub fn parse_directives_from_content(
                 // Fallback: try to extract anything from LINT.ThenChange(...)
                 if let Some(caps) = pats.then_change_fallback.captures(line_text) {
                     let raw = caps.get(1).unwrap().as_str().trim();
+                    // Multiple quoted strings without brackets: treat as implicit array
+                    let targets = parse_array_targets(raw);
+                    if targets.len() > 1 {
+                        for target in targets {
+                            directives.push(Directive::ThenChange {
+                                line: current_line,
+                                target,
+                            });
+                        }
+                        line_idx += 1;
+                        continue;
+                    }
                     let target = raw.trim_matches(|c| c == '\'' || c == '"').to_string();
                     directives.push(Directive::ThenChange {
                         line: current_line,
@@ -297,9 +309,10 @@ pub fn parse_directives_from_content(
 
 fn parse_array_targets(inner: &str) -> Vec<String> {
     static QUOTED: OnceLock<Regex> = OnceLock::new();
-    let re = QUOTED.get_or_init(|| Regex::new(r#"['\"]([^'\"]+)['\"]"#).unwrap());
+    let re = QUOTED.get_or_init(|| Regex::new(r#"['\"]([^'\"]*)['\"]"#).unwrap());
     re.captures_iter(inner)
         .map(|c| c.get(1).unwrap().as_str().to_string())
+        .filter(|s| !s.is_empty())
         .collect()
 }
 
@@ -575,5 +588,56 @@ mod tests {
             "-- LINT.IfChange\n-- LINT.ThenChange([\n--   \"a.sql\",\n--   \"b.sql\",\n-- ])\n";
         let directives = parse_directives_from_content(content, "x.sql").unwrap();
         assert_eq!(then_targets(directives), vec!["a.sql", "b.sql"]);
+    }
+}
+
+// Tests appended outside the existing mod tests block — we reopen it.
+#[cfg(test)]
+mod bug_tests {
+    use super::*;
+
+    fn then_targets(directives: Vec<Directive>) -> Vec<String> {
+        directives
+            .into_iter()
+            .filter_map(|d| match d {
+                Directive::ThenChange { target, .. } => Some(target),
+                _ => None,
+            })
+            .collect()
+    }
+
+    // BUG 5: Empty string "" in ThenChange array should be skipped, not misparsed.
+    #[test]
+    fn parse_array_targets_skips_empty_strings() {
+        let targets = parse_array_targets(r#""a.py", "", "b.py""#);
+        assert_eq!(targets, vec!["a.py", "b.py"]);
+    }
+
+    #[test]
+    fn thenchange_array_with_empty_element() {
+        let content = "// LINT.ThenChange([\"a.ts\", \"\", \"b.ts\"])\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.ts", "b.ts"]);
+    }
+
+    // BUG 7: ThenChange("a.py", "b.py") without brackets should either parse
+    // as two targets or produce a clear error, not silently mangle the path.
+    #[test]
+    fn thenchange_multiple_without_brackets_errors() {
+        let content = "// LINT.ThenChange(\"a.py\", \"b.py\")\n";
+        let result = parse_directives_from_content(content, "x.ts");
+        match result {
+            Ok(directives) => {
+                let targets = then_targets(directives);
+                assert!(
+                    targets == vec!["a.py", "b.py"],
+                    "should parse as two targets or error, got: {:?}",
+                    targets
+                );
+            }
+            Err(_) => {
+                // An error is also acceptable behavior
+            }
+        }
     }
 }

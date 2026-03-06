@@ -984,3 +984,88 @@ fn stdin_read_error_exits_2() {
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("Error reading stdin"), "stderr: {}", stderr);
 }
+
+// BUG 1: Cross-ref trigger should only check the specific pair's block range,
+// not all IfChange blocks in the source file.
+#[test]
+fn cross_ref_trigger_scoped_to_specific_block() {
+    let dir = TempDir::new().unwrap();
+    // source.py has TWO IfChange blocks:
+    //   block_a (lines 1-3) -> target_a.py
+    //   block_b (lines 5-7) -> target_b.py
+    // target_a.py and target_b.py both have IfChange blocks (cross-ref).
+    write_files(dir.path(), &[
+        ("source.py", "# LINT.IfChange(\"block_a\")\nVALUE_A = 1\n# LINT.ThenChange(\"target_a.py\")\n# other\n# LINT.IfChange(\"block_b\")\nVALUE_B = 1\n# LINT.ThenChange(\"target_b.py\")\n"),
+        ("target_a.py", "# LINT.IfChange\nMIRROR_A = 1\n# LINT.ThenChange(\"source.py\")\n"),
+        ("target_b.py", "# LINT.IfChange\nMIRROR_B = 1\n# LINT.ThenChange(\"source.py\")\n"),
+    ]);
+    // Only change block_b (line 6), and also change target_b.py.
+    // block_a should NOT be triggered.
+    let diff = make_diff(dir.path(), &[
+        ("source.py", "@@ -5,3 +5,3 @@\n # LINT.IfChange(\"block_b\")\n-VALUE_B = 1\n+VALUE_B = 2\n # LINT.ThenChange(\"target_b.py\")"),
+        ("target_b.py", "@@ -1,3 +1,3 @@\n # LINT.IfChange\n-MIRROR_B = 1\n+MIRROR_B = 2\n # LINT.ThenChange(\"source.py\")"),
+    ]);
+    let (code, stdout, _) = run_lint(&diff);
+    assert_eq!(
+        code, 0,
+        "changing block_b should not trigger block_a, stdout: {}",
+        stdout
+    );
+}
+
+// BUG 2: Filenames with spaces have trailing tab in git diff headers.
+#[test]
+fn filename_with_spaces_trailing_tab() {
+    let dir = TempDir::new().unwrap();
+    write_files(
+        dir.path(),
+        &[
+            (
+                "my dir/my file.py",
+                "# LINT.IfChange\nVALUE = 1\n# LINT.ThenChange(\"other file.py\")\n",
+            ),
+            ("my dir/other file.py", "VALUE = 1\n"),
+        ],
+    );
+    // Simulate git diff with trailing tab (as git does for paths with spaces)
+    let dir_str = dir.path().to_string_lossy().replace('\\', "/");
+    let diff = format!(
+        "--- a/{0}/my dir/my file.py\t\n+++ b/{0}/my dir/my file.py\t\n@@ -1,3 +1,3 @@\n # LINT.IfChange\n-VALUE = 1\n+VALUE = 2\n # LINT.ThenChange(\"other file.py\")\n",
+        dir_str
+    );
+    let (code, stdout, _) = run_lint(&diff);
+    assert_eq!(
+        code, 1,
+        "should detect violation despite trailing tab, stdout: {}",
+        stdout
+    );
+    assert!(stdout.contains("not changed"), "stdout: {}", stdout);
+}
+
+// BUG 4: UTF-8 BOM on first line breaks directive detection.
+#[test]
+fn bom_does_not_break_directives() {
+    let dir = TempDir::new().unwrap();
+    // File starts with BOM
+    write_files(
+        dir.path(),
+        &[
+            (
+                "bom.py",
+                "\u{FEFF}# LINT.IfChange\nVALUE = 1\n# LINT.ThenChange(\"other.py\")\n",
+            ),
+            ("other.py", "VALUE = 1\n"),
+        ],
+    );
+    let diff = make_diff(dir.path(), &[
+        ("bom.py", "@@ -1,3 +1,3 @@\n \u{FEFF}# LINT.IfChange\n-VALUE = 1\n+VALUE = 2\n # LINT.ThenChange(\"other.py\")"),
+    ]);
+    let (code, stdout, _) = run_lint(&diff);
+    // Should detect the violation (target not changed), NOT silently pass
+    assert_eq!(
+        code, 1,
+        "BOM file should still detect directives, stdout: {}",
+        stdout
+    );
+    assert!(stdout.contains("not changed"), "stdout: {}", stdout);
+}

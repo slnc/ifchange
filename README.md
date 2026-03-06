@@ -95,6 +95,10 @@ feature_enabled = true
 
 When two files reference each other, only changes *within* an `IfChange` block trigger validation, not changes elsewhere in the file.
 
+### Best practice
+
+When one side is the **source of truth** (live code) and the other is derived (docs, config), place the fence only on the source-of-truth side pointing at the derived side. Use **bidirectional** fencing only when both sides are live code that must stay in sync.
+
 ## CI / Automation
 
 Use as a pre-commit hook, CI lint step, or GitHub Actions check to enforce cross-file consistency in every pull request. Ready-to-copy templates are in [examples/](examples/README.md).
