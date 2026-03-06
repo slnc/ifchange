@@ -13,7 +13,7 @@ fn generate_16kloc_diff_case() -> (TempDir, String) {
     // Keep the generated diff near 16k lines:
     // 4 metadata lines + 2 context lines + (2 * replacements) ~= 16_000
     // Diff line count is: 5 + 2 * replacements. Use ceil division so we hit/exceed target.
-    let replacements = (TARGET_DIFF_LOC.saturating_sub(5) + 1) / 2;
+    let replacements = TARGET_DIFF_LOC.saturating_sub(5).div_ceil(2);
 
     let mut new_content = String::new();
     new_content.push_str("// LINT.IfChange\n");

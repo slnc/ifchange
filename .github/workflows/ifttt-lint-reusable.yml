@@ -1,4 +1,4 @@
-name: ifttt-lint (reusable)
+name: Lint IfChange (Reusable)
 
 on:
   workflow_call:

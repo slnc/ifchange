@@ -67,14 +67,10 @@ pub(super) fn index_target_file(file: &str) -> TargetLoad {
     }
 }
 
-fn build_pairs(
-    file: &str,
-    directives: &[Directive],
-) -> (
-    Vec<Pair>,
-    Vec<(usize, String)>,
-    Vec<(usize, Option<String>)>,
-) {
+type OrphanThen = Vec<(usize, String)>;
+type OrphanIf = Vec<(usize, Option<String>)>;
+
+fn build_pairs(file: &str, directives: &[Directive]) -> (Vec<Pair>, OrphanThen, OrphanIf) {
     let mut pairs = Vec::new();
     let mut orphan_then = Vec::new();
     let mut orphan_if = Vec::new();

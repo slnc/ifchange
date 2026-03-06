@@ -58,7 +58,7 @@ fn bench_check_5000(c: &mut Criterion) {
                     Ok(directives) => {
                         errors.extend(validate_directive_uniqueness(&directives, &file_path));
                     }
-                    Err(e) => errors.push(e),
+                    Err(e) => errors.push(e.to_string()),
                 }
             }
             assert!(errors.is_empty());
