@@ -1,3 +1,6 @@
+[![CI](https://github.com/slnc/lint-ifchange/actions/workflows/ci.yml/badge.svg)](https://github.com/slnc/lint-ifchange/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/slnc/lint-ifchange/branch/main/graph/badge.svg)](https://codecov.io/gh/slnc/lint-ifchange)
+
 # lint-ifchange
 
 **Keep related files in sync. Automatically catch forgotten correlated changes in pull requests.**

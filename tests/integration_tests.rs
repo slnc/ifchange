@@ -854,6 +854,69 @@ fn target_in_diff_with_no_changed_lines_reports_expected_changes() {
     assert!(stdout.contains("expected changes in"), "stdout: {}", stdout);
 }
 
+#[test]
+fn binary_diff_file_does_not_crash() {
+    use std::process::Stdio;
+
+    // Write raw binary bytes to a temp file and pass as diff input
+    let tmp = tempfile::NamedTempFile::new().unwrap();
+    fs::write(tmp.path(), b"\x00\x01\x02\x03\xff\xfe\xfd\n\x80\x90\xa0\n").unwrap();
+    let output = Command::new(binary_path())
+        .arg(tmp.path())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()
+        .unwrap();
+    let code = output.status.code().unwrap_or(-1);
+    // Should not crash — exit 0 (no directives) or 2 (read error on invalid UTF-8)
+    assert!(code == 0 || code == 2, "unexpected exit code: {code}");
+}
+
+#[test]
+fn binary_stdin_does_not_crash() {
+    use std::io::Write;
+    use std::process::Stdio;
+
+    let mut child = Command::new(binary_path())
+        .arg("-")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    // Write raw binary bytes via stdin
+    child
+        .stdin
+        .as_mut()
+        .unwrap()
+        .write_all(b"\x00\x01\x02\xff\xfe\xfd\n\x80\x90\xa0\n")
+        .unwrap();
+    let output = child.wait_with_output().unwrap();
+    let code = output.status.code().unwrap_or(-1);
+    assert!(code == 0 || code == 2, "unexpected exit code: {code}");
+}
+
+#[test]
+fn binary_data_in_diff_hunks_does_not_crash() {
+    let diff = "--- a/f.bin\n+++ b/f.bin\n@@ -1 +1 @@\n-\x00\x01\x02\n+\x03\x04\x05\n";
+    let (code, _stdout, _stderr) = run_lint(diff);
+    assert_eq!(code, 0);
+}
+
+#[test]
+fn check_mode_skips_binary_files() {
+    let dir = TempDir::new().unwrap();
+    fs::write(dir.path().join("binary.rs"), b"\x00\x01\x02\x03\xff\xfe").unwrap();
+    let output = Command::new(binary_path())
+        .arg("--check")
+        .arg(dir.path().join("binary.rs").to_string_lossy().to_string())
+        .output()
+        .unwrap();
+    let code = output.status.code().unwrap_or(-1);
+    // Should not crash — may exit 0 (no directives) or 2 (read error on invalid UTF-8)
+    assert!(code == 0 || code == 2, "unexpected exit code: {code}");
+}
+
 #[cfg(unix)]
 #[test]
 fn stdin_read_error_exits_2() {

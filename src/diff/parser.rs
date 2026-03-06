@@ -407,4 +407,32 @@ diff --git a/file b/file
 ";
         assert!(parse_changed_lines(diff).is_empty());
     }
+
+    #[test]
+    fn adversarial_input_does_not_crash() {
+        // Null bytes in diff content
+        let null_diff = "--- a/x.txt\n+++ b/x.txt\n@@ -1 +1 @@\n-\x00old\n+\x00new\n";
+        let _ = parse_changed_lines(null_diff);
+
+        // Completely nonsensical input (valid UTF-8, no structure)
+        let garbage = "\x00\x01\x02\x03\x04\x05\x06\x07\n\x0b\x0c\x0e\x0f\n";
+        assert!(parse_changed_lines(garbage).is_empty());
+
+        // Truncated hunk header
+        let truncated = "--- a/f.txt\n+++ b/f.txt\n@@ -\n";
+        let _ = parse_changed_lines(truncated);
+
+        // Huge line numbers in hunk header
+        let huge = "--- a/f.txt\n+++ b/f.txt\n@@ -999999999,1 +999999999,1 @@\n-a\n+b\n";
+        let _ = parse_changed_lines(huge);
+
+        // Multi-byte UTF-8 everywhere
+        let unicode =
+            "--- a/\u{1F4A9}.txt\n+++ b/\u{1F4A9}.txt\n@@ -1 +1 @@\n-\u{FFFF}\n+\u{10FFFF}\n";
+        let _ = parse_changed_lines(unicode);
+
+        // Empty lines and just whitespace
+        let empty = "\n\n\n   \n\t\n";
+        assert!(parse_changed_lines(empty).is_empty());
+    }
 }

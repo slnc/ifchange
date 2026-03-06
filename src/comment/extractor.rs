@@ -620,4 +620,29 @@ mod tests {
         assert_eq!(comments.len(), 1);
         assert!(comments[0].text.contains("unterminated"));
     }
+
+    #[test]
+    fn binary_data_does_not_crash() {
+        // Null bytes and control characters
+        let binary = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0b\x0c\x0e\x0f";
+        assert!(extract_comments(binary, "rs").is_empty());
+        assert!(extract_comments(binary, "py").is_empty());
+        assert!(extract_comments(binary, "html").is_empty());
+        assert!(extract_comments(binary, "sql").is_empty());
+        assert!(extract_comments(binary, "m").is_empty());
+        assert!(extract_comments(binary, "asm").is_empty());
+        assert!(extract_comments(binary, "vb").is_empty());
+        assert!(extract_comments(binary, "f90").is_empty());
+        assert!(extract_comments(binary, "xyz").is_empty());
+
+        // Comment delimiters mixed with null bytes
+        let nasty = "//\x00null\n/*\x00*/\n#\x00\n<!--\x00-->\n";
+        let _ = extract_comments(nasty, "rs");
+        let _ = extract_comments(nasty, "py");
+        let _ = extract_comments(nasty, "html");
+
+        // Lone high-codepoint unicode (valid UTF-8, but unusual)
+        let unicode = "// \u{FFFF}\u{10FFFF}\n/* \u{FEFF}\u{200B} */\n";
+        let _ = extract_comments(unicode, "rs");
+    }
 }
