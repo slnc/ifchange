@@ -44,14 +44,16 @@ Exit codes: **0** ok, **1** lint errors, **2** fatal error.
 
 ## Directive Syntax
 
-Directives live in comments. Supported in [128 file extensions](#supported-languages) (C-style `//`, `#`, `<!-- -->`, `--`, `%`, `;`, `'`, `!`), polyglot by design.
+Directives live inside comments. Supported in [128 file extensions](#supported-languages) with comment styles: `//`, `/* */`, `#`, `<!-- -->`, `--`, `%`, `;`, `'`, `!`, and more.
 
 **Case sensitivity:**
-- **Directive keywords** — case-insensitive. `LINT.IfChange`, `lint.ifchange`, `Lint.Ifchange` all work.
+- **Directive keywords** — case-insensitive. `LINT.IfChange`, `lint.ifchange`, `Lint.Ifchange`, `LINT.THENCHANGE`, `lint.LaBeL` all work.
 - **File extensions** — case-insensitive. `FOO.CSS`, `foo.css`, and `Foo.Css` are all recognized.
-- **File paths in ThenChange** — case-sensitive, matching git and Unix filesystem semantics. `ThenChange("Foo.css")` and `ThenChange("foo.css")` are different targets.
+- **File paths and label names** — case-sensitive, matching git and Unix filesystem semantics. `ThenChange("Foo.css")` and `ThenChange("foo.css")` are different targets.
 
-### Basic
+### LINT.IfChange
+
+Marks the start of a guarded block. When lines inside this block change, all `ThenChange` targets must also be modified.
 
 ```python
 # LINT.IfChange
@@ -59,13 +61,7 @@ VALUE = 42
 # LINT.ThenChange("constants.py")
 ```
 
-```markdown
-<!-- LINT.IfChange -->
-Current API version: **v2**
-<!-- LINT.ThenChange("constants.js") -->
-```
-
-### Labeled regions
+With a label (for targeted cross-references):
 
 ```python
 # LINT.IfChange("feature")
@@ -73,16 +69,39 @@ FEATURE_FLAG = True
 # LINT.ThenChange("config.py#feature")
 ```
 
-```python
-# config.py
-# LINT.Label("feature")
-feature_enabled = true
-# LINT.EndLabel
-```
-
-### Multiple targets
+All accepted formats:
 
 ```text
+LINT.IfChange                     # bare (unlabeled)
+LINT.IfChange("my-label")        # labeled, double quotes
+LINT.IfChange('my-label')        # labeled, single quotes
+LINT.IfChange(my-label)          # labeled, unquoted
+```
+
+### LINT.ThenChange
+
+Closes an `IfChange` block and declares which files (and optionally labels) must also change.
+
+**Single target:**
+
+```text
+LINT.ThenChange("other.py")        # quoted
+LINT.ThenChange('other.py')        # single quotes
+LINT.ThenChange(other.py)          # unquoted
+LINT.ThenChange("other.py#label")  # with label reference
+LINT.ThenChange("#label")          # self-reference (same file)
+```
+
+**Multiple targets — array syntax:**
+
+```text
+LINT.ThenChange(["a.ts", "b.ts"])                   # inline array
+LINT.ThenChange(["a.ts", "config.py#db", "c.sql"])  # with labels
+```
+
+Multi-line array (each line in its own comment):
+
+```js
 // LINT.ThenChange([
 //   "constants.ts",
 //   "config.py#db",
@@ -90,10 +109,41 @@ feature_enabled = true
 // ])
 ```
 
-### Self-references
+**Multiple targets — comma-separated (no brackets):**
+
+```text
+LINT.ThenChange("a.py", "b.py")        # quoted, no brackets
+LINT.ThenChange(a.py, b.py)            # unquoted, no brackets
+LINT.ThenChange(/src/a.py, /src/b.py)  # absolute paths, unquoted
+```
+
+### LINT.Label / LINT.EndLabel
+
+Defines a named region in a target file. When a `ThenChange` references `file.py#section`, only the lines between `Label("section")` and `EndLabel` must change — not the entire file.
 
 ```python
-# LINT.ThenChange("#label1")  # target in same file
+# LINT.Label("section")
+value = 42
+# LINT.EndLabel
+```
+
+All accepted formats:
+
+```text
+LINT.Label("name")     # double quotes
+LINT.Label('name')     # single quotes
+LINT.Label(name)       # unquoted
+LINT.EndLabel          # closes the label region
+```
+
+Label names can contain letters, numbers, hyphens, underscores, and dots.
+
+### Self-references
+
+Point to a label in the same file using `#label` without a filename:
+
+```python
+# LINT.ThenChange("#other-section")
 ```
 
 ### Cross-references

@@ -76,6 +76,15 @@ pub fn parse_directives_from_content(
                 line_idx += 1;
                 continue;
             }
+            if let Some(caps) = pats.if_change_labeled_unquoted.captures(line_text) {
+                let label = caps.get(1).unwrap().as_str().trim().to_string();
+                directives.push(Directive::IfChange {
+                    line: current_line,
+                    label: Some(label),
+                });
+                line_idx += 1;
+                continue;
+            }
 
             // Bare IfChange
             if pats.if_change_bare.is_match(line_text) {
@@ -245,6 +254,15 @@ pub fn parse_directives_from_content(
                     line_idx += 1;
                     continue;
                 }
+                if let Some(caps) = pats.label_unquoted.captures(line_text) {
+                    let name = caps.get(1).unwrap().as_str().trim().to_string();
+                    directives.push(Directive::Label {
+                        line: current_line,
+                        name,
+                    });
+                    line_idx += 1;
+                    continue;
+                }
                 return Err(DirectiveParseError::MalformedDirective {
                     directive: "LINT.Label",
                     path: file_path.to_string(),
@@ -310,10 +328,23 @@ pub fn parse_directives_from_content(
 fn parse_array_targets(inner: &str) -> Vec<String> {
     static QUOTED: OnceLock<Regex> = OnceLock::new();
     let re = QUOTED.get_or_init(|| Regex::new(r#"['\"]([^'\"]*)['\"]"#).unwrap());
-    re.captures_iter(inner)
+    let quoted: Vec<String> = re
+        .captures_iter(inner)
         .map(|c| c.get(1).unwrap().as_str().to_string())
         .filter(|s| !s.is_empty())
-        .collect()
+        .collect();
+    if !quoted.is_empty() {
+        return quoted;
+    }
+    // Fallback: split on comma for unquoted targets like "foo.txt, bar.txt"
+    if inner.contains(',') {
+        return inner
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
+    }
+    Vec::new()
 }
 
 #[cfg(test)]
@@ -620,24 +651,143 @@ mod bug_tests {
         assert_eq!(then_targets(directives), vec!["a.ts", "b.ts"]);
     }
 
-    // BUG 7: ThenChange("a.py", "b.py") without brackets should either parse
-    // as two targets or produce a clear error, not silently mangle the path.
+    // ThenChange("a.py", "b.py") without brackets should parse as two targets.
     #[test]
-    fn thenchange_multiple_without_brackets_errors() {
+    fn thenchange_multiple_quoted_without_brackets() {
         let content = "// LINT.ThenChange(\"a.py\", \"b.py\")\n";
-        let result = parse_directives_from_content(content, "x.ts");
-        match result {
-            Ok(directives) => {
-                let targets = then_targets(directives);
-                assert!(
-                    targets == vec!["a.py", "b.py"],
-                    "should parse as two targets or error, got: {:?}",
-                    targets
-                );
-            }
-            Err(_) => {
-                // An error is also acceptable behavior
-            }
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.py", "b.py"]);
+    }
+
+    // ThenChange(/foo.txt, /bar.txt) unquoted comma-separated should parse as two targets.
+    #[test]
+    fn thenchange_unquoted_comma_separated() {
+        let content = "// LINT.ThenChange(/foo.txt, /bar.txt)\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["/foo.txt", "/bar.txt"]);
+    }
+
+    #[test]
+    fn thenchange_unquoted_comma_separated_no_leading_slash() {
+        let content = "// LINT.ThenChange(foo.txt, bar.txt)\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["foo.txt", "bar.txt"]);
+    }
+
+    #[test]
+    fn thenchange_unquoted_comma_separated_with_labels() {
+        let content = "// LINT.ThenChange(/foo.txt#label1, /bar.txt#label2)\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(
+            then_targets(directives),
+            vec!["/foo.txt#label1", "/bar.txt#label2"]
+        );
+    }
+
+    #[test]
+    fn thenchange_unquoted_comma_separated_extra_whitespace() {
+        let content = "// LINT.ThenChange(  /foo.txt ,  /bar.txt  )\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["/foo.txt", "/bar.txt"]);
+    }
+
+    #[test]
+    fn thenchange_unquoted_single_target_no_quotes() {
+        let content = "// LINT.ThenChange(foo.txt)\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["foo.txt"]);
+    }
+
+    #[test]
+    fn thenchange_unquoted_three_targets() {
+        let content = "// LINT.ThenChange(a.txt, b.txt, c.txt)\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.txt", "b.txt", "c.txt"]);
+    }
+
+    // LINT.Label without quotes should work
+    #[test]
+    fn label_unquoted() {
+        let content = "// LINT.Label(my_section)\n// LINT.EndLabel\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert!(directives
+            .iter()
+            .any(|d| matches!(d, Directive::Label { name, .. } if name == "my_section")));
+    }
+
+    #[test]
+    fn label_unquoted_with_hyphens() {
+        let content = "// LINT.Label(my-section-v2)\n// LINT.EndLabel\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert!(directives
+            .iter()
+            .any(|d| matches!(d, Directive::Label { name, .. } if name == "my-section-v2")));
+    }
+
+    #[test]
+    fn label_case_insensitive_mixed() {
+        for variant in [
+            r#"lint.label("sec")"#,
+            r#"LINT.LABEL("sec")"#,
+            r#"Lint.Label("sec")"#,
+            r#"lint.LaBeL("sec")"#,
+            r#"LINT.label("sec")"#,
+        ] {
+            let content = format!("// {variant}\n// LINT.EndLabel\n");
+            let directives = parse_directives_from_content(&content, "x.ts").unwrap();
+            assert!(
+                directives
+                    .iter()
+                    .any(|d| matches!(d, Directive::Label { name, .. } if name == "sec")),
+                "failed for variant: {variant}"
+            );
+        }
+    }
+
+    #[test]
+    fn label_unquoted_case_insensitive() {
+        let content = "// lint.label(my_section)\n// lint.endlabel\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert!(directives
+            .iter()
+            .any(|d| matches!(d, Directive::Label { name, .. } if name == "my_section")));
+    }
+
+    #[test]
+    fn ifchange_unquoted_label() {
+        let content = "// LINT.IfChange(my-feature)\n// LINT.ThenChange(\"b.ts\")\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert!(directives
+            .iter()
+            .any(|d| matches!(d, Directive::IfChange { label: Some(l), .. } if l == "my-feature")));
+    }
+
+    #[test]
+    fn ifchange_unquoted_label_case_insensitive() {
+        let content = "// lint.ifchange(my_feature)\n// LINT.ThenChange(\"b.ts\")\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert!(directives
+            .iter()
+            .any(|d| matches!(d, Directive::IfChange { label: Some(l), .. } if l == "my_feature")));
+    }
+
+    #[test]
+    fn endlabel_case_insensitive_mixed() {
+        for variant in [
+            "lint.endlabel",
+            "LINT.ENDLABEL",
+            "Lint.EndLabel",
+            "lint.EndLabel",
+            "LINT.endlabel",
+        ] {
+            let content = format!("// LINT.Label(\"sec\")\n// {variant}\n");
+            let directives = parse_directives_from_content(&content, "x.ts").unwrap();
+            assert!(
+                directives
+                    .iter()
+                    .any(|d| matches!(d, Directive::EndLabel { .. })),
+                "failed for variant: {variant}"
+            );
         }
     }
 }
