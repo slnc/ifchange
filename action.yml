@@ -50,7 +50,7 @@ runs:
         if [[ -n "$INPUT_VERSION" ]]; then
           echo "tag=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
         else
-          tag="$(gh api /repos/${{ github.action_repository }}/releases/latest --jq .tag_name)"
+          tag="$(gh api /repos/${{ github.action_repository || github.repository }}/releases/latest --jq .tag_name)"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
         fi
 
@@ -66,7 +66,7 @@ runs:
         archive="lint-ifchange-${version}-${target}.${ext}"
 
         gh release download "$version" \
-          --repo "${{ github.action_repository }}" \
+          --repo "${{ github.action_repository || github.repository }}" \
           --pattern "$archive" \
           --dir "${{ runner.temp }}"
 
