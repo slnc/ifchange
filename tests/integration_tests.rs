@@ -985,6 +985,34 @@ fn stdin_read_error_exits_2() {
     assert!(stderr.contains("Error reading stdin"), "stderr: {}", stderr);
 }
 
+// File path matching in ThenChange is case-sensitive: FOO.txt != foo.txt.
+#[test]
+fn thenchange_path_is_case_sensitive() {
+    let dir = TempDir::new().unwrap();
+    // Source references "FOO.txt" (uppercase), but the actual changed file is "foo.txt" (lowercase).
+    write_files(
+        dir.path(),
+        &[
+            (
+                "source.py",
+                "# LINT.IfChange\nVALUE = 1\n# LINT.ThenChange(\"FOO.txt\")\n",
+            ),
+            ("foo.txt", "# data\n"),
+        ],
+    );
+    let diff = make_diff(dir.path(), &[
+        ("source.py", "@@ -1,3 +1,3 @@\n # LINT.IfChange\n-VALUE = 1\n+VALUE = 2\n # LINT.ThenChange(\"FOO.txt\")"),
+        ("foo.txt", "@@ -1 +1 @@\n-# data\n+# updated data"),
+    ]);
+    let (code, stdout, _) = run_lint(&diff);
+    // FOO.txt is not the same as foo.txt — should fail (target not found or not changed)
+    assert_eq!(
+        code, 1,
+        "case-different path should not match, stdout: {}",
+        stdout
+    );
+}
+
 // BUG 1: Cross-ref trigger should only check the specific pair's block range,
 // not all IfChange blocks in the source file.
 #[test]

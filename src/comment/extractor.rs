@@ -1043,6 +1043,30 @@ mod tests {
     }
 
     #[test]
+    fn extension_matching_is_case_insensitive() {
+        // Uppercase extensions should match the same as lowercase.
+        assert_eq!(extract_comments("// note\n", "RS"), vec![c(1, " note")]);
+        assert_eq!(extract_comments("# note\n", "PY"), vec![c(1, " note")]);
+        assert_eq!(
+            extract_comments("/* note */\n", "CSS"),
+            vec![c(1, " note ")]
+        );
+        assert_eq!(
+            extract_comments("<!-- note -->\n", "HTML"),
+            vec![c(1, " note ")]
+        );
+        assert_eq!(extract_comments("-- note\n", "SQL"), vec![c(1, " note")]);
+        assert_eq!(extract_comments("% note\n", "TEX"), vec![c(1, " note")]);
+        assert_eq!(extract_comments("; note\n", "EL"), vec![c(1, " note")]);
+        assert_eq!(extract_comments("' note\n", "VB"), vec![c(1, " note")]);
+        assert_eq!(extract_comments("! note\n", "F90"), vec![c(1, " note")]);
+
+        // Mixed case
+        assert_eq!(extract_comments("// note\n", "Rs"), vec![c(1, " note")]);
+        assert_eq!(extract_comments("# note\n", "Py"), vec![c(1, " note")]);
+    }
+
+    #[test]
     fn binary_data_does_not_crash() {
         // Null bytes and control characters
         let binary = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0b\x0c\x0e\x0f";

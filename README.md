@@ -6,7 +6,7 @@ Ever renamed a field in `schema.sql` but forgot to update the ORM model? Changed
 
 Add lightweight comment directives to mark related sections. When a guarded block changes in a PR, the linter verifies that all referenced files were also modified, catching config drift, forgotten updates, and out-of-sync files before they reach production.
 
-Based on Google's internal LINT.IfChange/ThenChange system. Language-agnostic, works with any file type that supports comments. Inspired by [ebrevdo/ifttt-lint](https://github.com/ebrevdo/ifttt-lint).
+Based on Google's internal LINT.IfChange/ThenChange system. Supports **128 file extensions** across 50+ languages — works with any file type that has comments. Inspired by [ebrevdo/ifttt-lint](https://github.com/ebrevdo/ifttt-lint).
 
 ## Install
 
@@ -44,7 +44,12 @@ Exit codes: **0** ok, **1** lint errors, **2** fatal error.
 
 ## Directive Syntax
 
-Directives live in comments. Supported in 50+ file extensions (C-style `//`, `#`, `<!-- -->`, `--`, `%`, `;`, `'`, `!`), polyglot by design.
+Directives live in comments. Supported in [128 file extensions](#supported-languages) (C-style `//`, `#`, `<!-- -->`, `--`, `%`, `;`, `'`, `!`), polyglot by design.
+
+**Case sensitivity:**
+- **Directive keywords** — case-insensitive. `LINT.IfChange`, `lint.ifchange`, `Lint.Ifchange` all work.
+- **File extensions** — case-insensitive. `FOO.CSS`, `foo.css`, and `Foo.Css` are all recognized.
+- **File paths in ThenChange** — case-sensitive, matching git and Unix filesystem semantics. `ThenChange("Foo.css")` and `ThenChange("foo.css")` are different targets.
 
 ### Basic
 
@@ -133,6 +138,36 @@ chmod +x .git/hooks/pre-commit
 |------|-----:|----------:|---------:|
 | **Lint** | **28 ms** | 714 ms | **~25x** |
 | **Check** | **15 ms** | 387 ms | **~26x** |
+
+<!-- LINT.IfChange("supported-languages") -->
+## Supported Languages
+
+| | | | | | |
+|---|---|---|---|---|---|
+| `.ada` | `.cr` | `.gleam` | `.kt` | `.proto` | `.swift` |
+| `.adb` | `.cs` | `.go` | `.kts` | `.ps1` | `.tex` |
+| `.ads` | `.css` | `.gradle` | `.latex` | `.psd1` | `.tf` |
+| `.asm` | `.cxx` | `.groovy` | `.less` | `.psm1` | `.tfvars` |
+| `.bas` | `.dart` | `.h` | `.lisp` | `.py` | `.thrift` |
+| `.bash` | `.el` | `.hcl` | `.lsp` | `.r` | `.toml` |
+| `.bat` | `.env` | `.hh` | `.lua` | `.rb` | `.ts` |
+| `.bzl` | `.erb` | `.hpp` | `.m` | `.rkt` | `.tsx` |
+| `.c` | `.erl` | `.hrl` | `.md` | `.rs` | `.v` |
+| `.c++` | `.ex` | `.hs` | `.mjs` | `.s` | `.vb` |
+| `.cc` | `.exs` | `.htm` | `.mk` | `.sass` | `.vba` |
+| `.cjs` | `.f` | `.html` | `.mm` | `.scala` | `.vhd` |
+| `.cl` | `.f03` | `.hxx` | `.mojo` | `.scm` | `.vhdl` |
+| `.clj` | `.f08` | `.ini` | `.mts` | `.scss` | `.vue` |
+| `.cljc` | `.f90` | `.java` | `.nim` | `.sh` | `.xml` |
+| `.cljs` | `.f95` | `.jl` | `.nix` | `.sql` | `.xsl` |
+| `.cls` | `.for` | `.js` | `.php` | `.sty` | `.xslt` |
+| `.cmake` | `.fs` | `.jsonc` | `.pl` | `.styl` | `.yaml` |
+| `.cmd` | `.fsi` | `.jsp` | `.pm` | `.sv` | `.yml` |
+| `.conf` | `.fsx` | `.jsx` | `.pro` | `.svelte` | `.zig` |
+| `.cpp` | `.gd` | `.ksh` | `.prolog` | `.svg` | `.zsh` |
+
+**Special files** — `.dockerfile` `.gitignore`
+<!-- LINT.ThenChange("src/comment/extractor.rs") -->
 
 ## [Architecture](docs/ARCHITECTURE.md) · [Contributing](docs/CONTRIBUTING.md) · [License (MIT)](LICENSE)
 
