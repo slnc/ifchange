@@ -22,7 +22,7 @@ fn make_diff(dir: &Path, changes: &[(&str, &str)]) -> String {
     let mut diff_lines = Vec::new();
     for (file, hunk) in changes {
         let full_path = dir.join(file);
-        let full = full_path.to_string_lossy();
+        let full = full_path.to_string_lossy().replace('\\', "/");
         diff_lines.push(format!("--- a/{}", full));
         diff_lines.push(format!("+++ b/{}", full));
         diff_lines.push(hunk.to_string());
