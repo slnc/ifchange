@@ -2,10 +2,11 @@
 
 [![Test](https://github.com/slnc/ifchange/actions/workflows/test.yml/badge.svg)](https://github.com/slnc/ifchange/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/slnc/ifchange/branch/main/graph/badge.svg)](https://codecov.io/gh/slnc/ifchange)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=slnc_ifchange&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=slnc_ifchange)
+<br />
 [![crates.io](https://img.shields.io/crates/v/ifchange)](https://crates.io/crates/ifchange)
 [![npm](https://img.shields.io/npm/v/ifchange)](https://www.npmjs.com/package/ifchange)
 [![PyPI](https://img.shields.io/pypi/v/ifchange)](https://pypi.org/project/ifchange/)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=slnc_ifchange&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=slnc_ifchange)
 [![Sigstore](https://img.shields.io/badge/sigstore-signed-blue?logo=sigstore)](https://www.sigstore.dev/)
 [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
 
