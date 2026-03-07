@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772903143286,
+  "lastUpdate": 1772903605702,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -1439,6 +1439,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 58949194,
             "range": "± 874483",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "distinct": true,
+          "id": "0410dbfbf6a7e5449683c8ae753363f0336dc785",
+          "message": "fix: pass client_payload as JSON object in repository dispatch",
+          "timestamp": "2026-03-07T18:10:10+01:00",
+          "tree_id": "0ab3971e0add5dfa2421e24c9dfa790c14355eec",
+          "url": "https://github.com/slnc/ifchange/commit/0410dbfbf6a7e5449683c8ae753363f0336dc785"
+        },
+        "date": 1772903604911,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 3486059,
+            "range": "± 13795",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7506673,
+            "range": "± 274598",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 40650636,
+            "range": "± 1683609",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 59955000,
+            "range": "± 383716",
             "unit": "ns/iter"
           }
         ]
