@@ -22,7 +22,7 @@ on:
         description: Command used when binary_source=cargo
         required: false
         type: string
-        default: cargo install lint-ifchange
+        default: cargo install ifchange
       base_ref:
         description: "Base branch name (e.g. main) used for merge-base diff"
         required: false
@@ -39,7 +39,7 @@ on:
         type: string
         default: ""
       lint_args:
-        description: Extra arguments passed to lint-ifchange
+        description: Extra arguments passed to ifchange
         required: false
         type: string
         default: ""
@@ -49,7 +49,7 @@ on:
         required: false
 
 jobs:
-  lint-ifchange:
+  ifchange:
     runs-on: ubuntu-latest
 
     steps:
@@ -62,7 +62,7 @@ jobs:
         if: ${{ inputs.binary_source == 'cargo' }}
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install lint-ifchange (cargo)
+      - name: Install ifchange (cargo)
         if: ${{ inputs.binary_source == 'cargo' }}
         shell: bash
         run: ${{ inputs.install_cmd }}
@@ -71,7 +71,7 @@ jobs:
         if: ${{ inputs.binary_source == 'prebuilt' }}
         uses: sigstore/cosign-installer@v4.0.0
 
-      - name: Install lint-ifchange (prebuilt + verified)
+      - name: Install ifchange (prebuilt + verified)
         if: ${{ inputs.binary_source == 'prebuilt' }}
         shell: bash
         env:
@@ -91,7 +91,7 @@ jobs:
           fi
 
           TARGET="x86_64-unknown-linux-gnu"
-          ARCHIVE="lint-ifchange-${BINARY_VERSION}-${TARGET}.tar.gz"
+          ARCHIVE="ifchange-${BINARY_VERSION}-${TARGET}.tar.gz"
           EXPECTED_IDENTITY="https://github.com/${RELEASE_REPOSITORY}/.github/workflows/release-binaries.yml@refs/tags/${BINARY_VERSION}"
 
           gh release download "$BINARY_VERSION" --repo "$RELEASE_REPOSITORY" --pattern "$ARCHIVE"
@@ -109,9 +109,9 @@ jobs:
           sha256sum -c SHA256SUMS.filtered
 
           tar -xzf "$ARCHIVE"
-          chmod +x lint-ifchange
+          chmod +x ifchange
           mkdir -p "$HOME/.local/bin"
-          mv lint-ifchange "$HOME/.local/bin/lint-ifchange"
+          mv ifchange "$HOME/.local/bin/ifchange"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Build diff
@@ -128,13 +128,13 @@ jobs:
             git diff HEAD~1 HEAD > changes.diff
           fi
 
-      - name: Run lint-ifchange
+      - name: Run ifchange
         shell: bash
         run: |
           set -euo pipefail
 
           if [[ -n "${{ inputs.lint_args }}" ]]; then
-            lint-ifchange ${{ inputs.lint_args }} changes.diff
+            ifchange ${{ inputs.lint_args }} changes.diff
           else
-            lint-ifchange changes.diff
+            ifchange changes.diff
           fi

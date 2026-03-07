@@ -1,4 +1,4 @@
-name: lint-ifchange
+name: ifchange
 description: Enforce LINT.IfChange/ThenChange directives in pull requests
 branding:
   icon: check-circle
@@ -11,7 +11,7 @@ inputs:
     required: false
     default: ""
   args:
-    description: "Extra arguments passed to lint-ifchange"
+    description: "Extra arguments passed to ifchange"
     required: false
     default: ""
   diff:
@@ -25,8 +25,8 @@ inputs:
 # LINT.ThenChange([
 #   "README.md#action",
 #   "examples/README.md#action",
-#   "examples/workflows/lint-ifchange.yml",
-#   ".github/workflows/lint-ifchange.yml",
+#   "examples/workflows/ifchange.yml",
+#   ".github/workflows/ifchange.yml",
 # ])
 
 runs:
@@ -36,9 +36,9 @@ runs:
       id: check
       shell: bash
       run: |
-        if command -v lint-ifchange &>/dev/null; then
+        if command -v ifchange &>/dev/null; then
           echo "found=true" >> "$GITHUB_OUTPUT"
-          echo "lint-ifchange already on PATH: $(which lint-ifchange)"
+          echo "ifchange already on PATH: $(which ifchange)"
         else
           echo "found=false" >> "$GITHUB_OUTPUT"
         fi
@@ -86,7 +86,7 @@ runs:
         version="${{ steps.version.outputs.tag }}"
         target="${{ steps.platform.outputs.target }}"
         ext="${{ steps.platform.outputs.ext }}"
-        archive="lint-ifchange-${version}-${target}.${ext}"
+        archive="ifchange-${version}-${target}.${ext}"
 
         gh release download "$version" \
           --repo "$ACTION_REPO" \
@@ -99,9 +99,9 @@ runs:
         else
           unzip -o "$archive"
         fi
-        chmod +x lint-ifchange* 2>/dev/null || true
+        chmod +x ifchange* 2>/dev/null || true
         mkdir -p "$HOME/.local/bin"
-        mv lint-ifchange* "$HOME/.local/bin/"
+        mv ifchange* "$HOME/.local/bin/"
         echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
     - name: Build diff
@@ -120,8 +120,8 @@ runs:
         fi
         echo "path=$diff_file" >> "$GITHUB_OUTPUT"
 
-    - name: Run lint-ifchange
+    - name: Run ifchange
       shell: bash
       run: |
         diff_file="${{ inputs.diff || steps.diff.outputs.path }}"
-        lint-ifchange ${{ inputs.args }} "$diff_file"
+        ifchange ${{ inputs.args }} "$diff_file"

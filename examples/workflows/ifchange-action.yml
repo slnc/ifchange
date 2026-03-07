@@ -1,4 +1,4 @@
-name: Lint IfChange
+name: IfChange
 
 on:
   pull_request:
@@ -6,11 +6,11 @@ on:
     branches: [main]
 
 jobs:
-  lint-ifchange:
+  ifchange:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: slnc/lint-ifchange@v1
+      - uses: slnc/ifchange@v1

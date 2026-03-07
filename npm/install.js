@@ -8,8 +8,8 @@ const { execSync } = require("child_process");
 const os = require("os");
 const crypto = require("crypto");
 
-const REPO = "slnc/lint-ifchange";
-const BINARY = "lint-ifchange";
+const REPO = "slnc/ifchange";
+const BINARY = "ifchange";
 const VERSION = `v${require("./package.json").version}`;
 
 const BIN_DIR = path.join(__dirname, "bin");
@@ -36,7 +36,7 @@ function getTarget() {
 
 function fetch(url) {
   return new Promise((resolve, reject) => {
-    https.get(url, { headers: { "User-Agent": "lint-ifchange-npm" } }, (res) => {
+    https.get(url, { headers: { "User-Agent": "ifchange-npm" } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return fetch(res.headers.location).then(resolve, reject);
       }
@@ -83,7 +83,7 @@ async function install() {
   console.log("Checksum verified.");
 
   // Extract to temp dir
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-ifchange-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ifchange-"));
   const archivePath = path.join(tmpDir, archiveName);
   fs.writeFileSync(archivePath, archive);
 

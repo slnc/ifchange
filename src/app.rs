@@ -36,8 +36,8 @@ fn dim(s: &str) -> String {
 
 #[derive(Parser)]
 #[command(
-    name = "ifttt-lint",
-    about = "IFTTT lint checker for enforcing conditional change directives"
+    name = "ifchange",
+    about = "Linter for enforcing conditional change directives"
 )]
 pub struct Cli {
     /// Diff file path, or '-' / omit to read from stdin
@@ -98,12 +98,17 @@ pub fn run(cli: Cli) -> i32 {
     }
 
     let mut exit_code = 0;
+    let mut scan_errors = 0usize;
+    let mut lint_errors = 0usize;
+    let mut ran_scan = false;
 
     // Scan phase: validate directive syntax across a directory.
     if !cli.no_scan {
+        ran_scan = true;
         let scan_dir = cli.scan.as_deref().unwrap_or(".");
-        let scan_result = run_scan(scan_dir, verbose, debug);
-        exit_code = exit_code.max(scan_result);
+        let (scan_exit, scan_err_count) = run_scan(scan_dir, verbose, debug);
+        scan_errors = scan_err_count;
+        exit_code = exit_code.max(scan_exit);
     }
 
     // Lint phase: validate cross-file dependencies from a diff.
@@ -158,10 +163,49 @@ pub fn run(cli: Cli) -> i32 {
 
         let result = lint_diff(&diff_text, verbose, debug, &cli.ignore);
 
-        for msg in &result.verbose_messages {
+        lint_errors = result.messages.len();
+
+        // Verbose: lint header with blank line separator from scan
+        if verbose {
+            if ran_scan {
+                eprintln!();
+            }
+            let mut header = format!(
+                "lint: {} {} checked",
+                result.pairs_checked,
+                if result.pairs_checked == 1 {
+                    "pair"
+                } else {
+                    "pairs"
+                },
+            );
+            if result.files_checked > 0 {
+                header.push_str(&format!(
+                    " across {} {}",
+                    result.files_checked,
+                    if result.files_checked == 1 {
+                        "file"
+                    } else {
+                        "files"
+                    },
+                ));
+            }
+            if lint_errors > 0 {
+                header.push_str(&format!(
+                    ", {} {}",
+                    lint_errors,
+                    if lint_errors == 1 { "error" } else { "errors" },
+                ));
+            }
+            eprintln!("{}", dim(&header));
+        }
+
+        // Debug: show all triggered pairs
+        for msg in &result.debug_messages {
             eprintln!("{}", dim(msg));
         }
 
+        // Errors at column 0
         for msg in &result.messages {
             eprintln!("{}", red(msg));
         }
@@ -174,11 +218,33 @@ pub fn run(cli: Cli) -> i32 {
         exit_code = exit_code.max(lint_exit);
     }
 
+    // Final error summary line
+    let total_errors = scan_errors + lint_errors;
+    if total_errors > 0 {
+        let mut parts: Vec<String> = Vec::new();
+        if scan_errors > 0 {
+            parts.push(format!("{} scan", scan_errors));
+        }
+        if lint_errors > 0 {
+            parts.push(format!("{} lint", lint_errors));
+        }
+        eprintln!(
+            "\n{}",
+            red(&format!(
+                "found {} {} ({})",
+                total_errors,
+                if total_errors == 1 { "error" } else { "errors" },
+                parts.join(", ")
+            ))
+        );
+    }
+
     exit_code
 }
 
-fn run_scan(dir: &str, verbose: bool, debug: bool) -> i32 {
+fn run_scan(dir: &str, verbose: bool, debug: bool) -> (i32, usize) {
     let errors: Mutex<Vec<String>> = Mutex::new(Vec::new());
+    let debug_lines: Mutex<Vec<String>> = Mutex::new(Vec::new());
     let file_count = AtomicUsize::new(0);
     let directive_pair_count = AtomicUsize::new(0);
 
@@ -215,16 +281,13 @@ fn run_scan(dir: &str, verbose: bool, debug: bool) -> i32 {
                     .count();
                 directive_pair_count.fetch_add(pair_count, Ordering::Relaxed);
 
-                if verbose && pair_count > 0 {
-                    eprintln!(
-                        "{}",
-                        dim(&format!(
-                            "[ifttt] {}: {} directive {}",
-                            file_path,
-                            pair_count,
-                            if pair_count == 1 { "pair" } else { "pairs" }
-                        ))
-                    );
+                if debug && pair_count > 0 {
+                    debug_lines.lock().unwrap().push(format!(
+                        "  {}: {} directive {}",
+                        file_path,
+                        pair_count,
+                        if pair_count == 1 { "pair" } else { "pairs" }
+                    ));
                 }
 
                 let dup_errors = validate_directive_uniqueness(&directives, &file_path);
@@ -242,33 +305,42 @@ fn run_scan(dir: &str, verbose: bool, debug: bool) -> i32 {
     });
 
     let errors = errors.into_inner().unwrap();
+    let debug_lines = debug_lines.into_inner().unwrap();
+    let err_count = errors.len();
+
+    // Verbose: scan header
+    if verbose {
+        let files = file_count.load(Ordering::Relaxed);
+        let pairs = directive_pair_count.load(Ordering::Relaxed);
+        let mut header = format!(
+            "scan: {} {}, {} directive {}",
+            files,
+            if files == 1 { "file" } else { "files" },
+            pairs,
+            if pairs == 1 { "pair" } else { "pairs" },
+        );
+        if err_count > 0 {
+            header.push_str(&format!(
+                ", {} {}",
+                err_count,
+                if err_count == 1 { "error" } else { "errors" },
+            ));
+        }
+        eprintln!("{}", dim(&header));
+    }
+
+    // Debug: per-file detail
+    for line in &debug_lines {
+        eprintln!("{}", dim(line));
+    }
+
+    // Errors at column 0
     for err in &errors {
         eprintln!("{}", red(err));
     }
 
-    if verbose {
-        let files = file_count.load(Ordering::Relaxed);
-        let pairs = directive_pair_count.load(Ordering::Relaxed);
-        let errs = errors.len();
-        eprintln!(
-            "{}",
-            dim(&format!(
-                "[ifttt] scanned {} {}, {} directive {}, {} {}",
-                files,
-                if files == 1 { "file" } else { "files" },
-                pairs,
-                if pairs == 1 { "pair" } else { "pairs" },
-                errs,
-                if errs == 1 { "error" } else { "errors" },
-            ))
-        );
-    }
-
-    if errors.is_empty() {
-        0
-    } else {
-        1
-    }
+    let exit_code = if errors.is_empty() { 0 } else { 1 };
+    (exit_code, err_count)
 }
 
 pub fn run_from_env() -> ! {

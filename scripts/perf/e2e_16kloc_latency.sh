@@ -30,7 +30,7 @@ replacements=$(( (TARGET_DIFF_LOC - 5 + 1) / 2 ))
   echo " // LINT.ThenChange(\"big.ts\")"
 } > "$DIFF"
 
-BIN="target/release/lint-ifchange"
+BIN="target/release/ifchange"
 cargo build --release -q
 "$BIN" "$DIFF" >/dev/null 2>&1
 

@@ -1,8 +1,8 @@
-# lint-ifchange
+# ifchange
 
 **Keep related files in sync. Automatically catch forgotten correlated changes in pull requests.**
 
-Ever renamed a field in `schema.sql` but forgot to update the ORM model? Changed a constant in one file while its copy in another went stale? These cross-file dependencies are invisible to compilers and easy to miss in code review. `lint-ifchange` is a file dependency linter that enforces co-changes across files so that related code never drifts out of sync.
+Ever renamed a field in `schema.sql` but forgot to update the ORM model? Changed a constant in one file while its copy in another went stale? These cross-file dependencies are invisible to compilers and easy to miss in code review. `ifchange` is a file dependency linter that enforces co-changes across files so that related code never drifts out of sync.
 
 Add lightweight comment directives to mark related sections. When a guarded block changes in a PR, the linter verifies that all referenced files were also modified, catching config drift, forgotten updates, and out-of-sync files before they reach production.
 
@@ -20,22 +20,22 @@ Pipe a diff from your version control system or pass a diff file directly. By de
 
 ```bash
 # Pipe a diff (checks directive syntax + lints the diff)
-git diff HEAD~1 | lint-ifchange
+git diff HEAD~1 | ifchange
 
 # Or pass a file
-lint-ifchange changes.diff
+ifchange changes.diff
 
 # Scan only: validate directive syntax, skip diff lint
-lint-ifchange --no-lint
+ifchange --no-lint
 
 # Scan a specific directory
-lint-ifchange --no-lint -s ./src
+ifchange --no-lint -s ./src
 
 # Lint only: skip directive syntax scan
-git diff HEAD~1 | lint-ifchange --no-scan
+git diff HEAD~1 | ifchange --no-scan
 
 # Ignore files or labels
-lint-ifchange -i '*.json' -i 'config.toml#db' changes.diff
+ifchange -i '*.json' -i 'config.toml#db' changes.diff
 ```
 
 | Flag | Description |
@@ -176,13 +176,13 @@ Use as a pre-commit hook, CI lint step, or GitHub Actions check to enforce cross
 ### GitHub Action
 
 ```yaml
-- uses: slnc/lint-ifchange@v1
+- uses: slnc/ifchange@v1
 ```
 
 | Input | Description | Default |
 |-------|-------------|---------|
 | `version` | Release tag to install (e.g. `v1.0.0`). Empty means latest. | latest |
-| `args` | Extra arguments passed to lint-ifchange | |
+| `args` | Extra arguments passed to ifchange | |
 | `diff` | Path to a pre-built diff file. If empty, the action generates one. | |
 | `token` | GitHub token for downloading release assets | `github.token` |
 <!-- LINT.ThenChange("action.yml#inputs") -->
@@ -190,7 +190,7 @@ Use as a pre-commit hook, CI lint step, or GitHub Actions check to enforce cross
 ### Pre-commit hook
 
 ```bash
-cp examples/hooks/pre-commit.ifttt-lint.sh .git/hooks/pre-commit
+cp examples/hooks/pre-commit.ifchange.sh .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
 
@@ -235,13 +235,13 @@ chmod +x .git/hooks/pre-commit
 
 ## Recommended AGENTS.md
 
-Add the following to your repository's `AGENTS.md` (or equivalent AI-agent instructions file) so coding agents use `lint-ifchange` directives correctly:
+Add the following to your repository's `AGENTS.md` (or equivalent AI-agent instructions file) so coding agents use `ifchange` directives correctly:
 
 ```markdown
-## Cross-file dependencies (lint-ifchange)
+## Cross-file dependencies (ifchange)
 
-This repo uses `lint-ifchange` to enforce that related code changes together.
-CI runs `git diff ... | lint-ifchange` on every PR.
+This repo uses `ifchange` to enforce that related code changes together.
+CI runs `git diff ... | ifchange` on every PR.
 
 ### Rules for AI agents
 
@@ -256,14 +256,14 @@ CI runs `git diff ... | lint-ifchange` on every PR.
   `LINT.ThenChange(a.py, b.py)` or `LINT.ThenChange([a.py, b.py])`.
 - Self-references use `#label` with no filename: `LINT.ThenChange(#other-section)`.
 - Place fences on the source-of-truth side pointing at derived files. Use bidirectional fences only when both sides are live code.
-- Run `lint-ifchange --no-lint` to validate directive syntax before committing.
+- Run `ifchange --no-lint` to validate directive syntax before committing.
 ```
 
 ## [Architecture](docs/ARCHITECTURE.md) · [Contributing](docs/CONTRIBUTING.md) · [License (MIT)](LICENSE)
 
 ---
 
-[![Test](https://github.com/slnc/lint-ifchange/actions/workflows/test.yml/badge.svg)](https://github.com/slnc/lint-ifchange/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/slnc/lint-ifchange/branch/main/graph/badge.svg)](https://codecov.io/gh/slnc/lint-ifchange)
+[![Test](https://github.com/slnc/ifchange/actions/workflows/test.yml/badge.svg)](https://github.com/slnc/ifchange/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/slnc/ifchange/branch/main/graph/badge.svg)](https://codecov.io/gh/slnc/ifchange)
 [![Sigstore](https://img.shields.io/badge/sigstore-signed-blue?logo=sigstore)](https://www.sigstore.dev/)
 [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)

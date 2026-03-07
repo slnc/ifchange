@@ -65,26 +65,26 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME}"
-          NAME="lint-ifchange-${VERSION}-${{ matrix.target }}"
-          BIN="target/${{ matrix.target }}/release/lint-ifchange"
-          cp "$BIN" lint-ifchange
-          chmod +x lint-ifchange
-          tar -czf "${NAME}.tar.gz" lint-ifchange
+          NAME="ifchange-${VERSION}-${{ matrix.target }}"
+          BIN="target/${{ matrix.target }}/release/ifchange"
+          cp "$BIN" ifchange
+          chmod +x ifchange
+          tar -czf "${NAME}.tar.gz" ifchange
 
       - name: Package artifact (windows)
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
           $version = "${{ github.ref_name }}"
-          $name = "lint-ifchange-$version-${{ matrix.target }}"
-          Copy-Item "target/${{ matrix.target }}/release/lint-ifchange.exe" "lint-ifchange.exe"
-          Compress-Archive -Path "lint-ifchange.exe" -DestinationPath "$name.zip"
+          $name = "ifchange-$version-${{ matrix.target }}"
+          Copy-Item "target/${{ matrix.target }}/release/ifchange.exe" "ifchange.exe"
+          Compress-Archive -Path "ifchange.exe" -DestinationPath "$name.zip"
 
       - name: Generate artifact hash
         shell: bash
         run: |
           set -euo pipefail
-          ARTIFACT="lint-ifchange-${{ github.ref_name }}-${{ matrix.target }}.${{ matrix.archive_ext }}"
+          ARTIFACT="ifchange-${{ github.ref_name }}-${{ matrix.target }}.${{ matrix.archive_ext }}"
           if command -v sha256sum &>/dev/null; then
             sha256sum "$ARTIFACT" > hash-${{ matrix.target }}.txt
           else
@@ -104,7 +104,7 @@ jobs:
         with:
           name: release-${{ matrix.target }}
           path: |
-            lint-ifchange-${{ github.ref_name }}-${{ matrix.target }}.${{ matrix.archive_ext }}
+            ifchange-${{ github.ref_name }}-${{ matrix.target }}.${{ matrix.archive_ext }}
           if-no-files-found: error
           retention-days: 5
 
@@ -164,7 +164,7 @@ jobs:
         run: |
           set -euo pipefail
           cd dist
-          sha256sum lint-ifchange-* > SHA256SUMS
+          sha256sum ifchange-* > SHA256SUMS
 
       - name: Sign checksum manifest (keyless)
         shell: bash
@@ -180,7 +180,7 @@ jobs:
         run: |
           set -euo pipefail
           cd dist
-          for f in lint-ifchange-*.tar.gz lint-ifchange-*.zip; do
+          for f in ifchange-*.tar.gz ifchange-*.zip; do
             [ -e "$f" ] || continue
             cosign sign-blob --yes \
               --bundle "$f.bundle" \
@@ -200,7 +200,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           files: |
-            dist/lint-ifchange-*
+            dist/ifchange-*
             dist/SHA256SUMS
             dist/SHA256SUMS.bundle
             dist/sbom.spdx.json

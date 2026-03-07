@@ -1,4 +1,4 @@
-name: ifttt-lint
+name: ifchange
 
 on:
   pull_request:
@@ -7,11 +7,11 @@ on:
       - main
 
 env:
-  IFTTT_LINT_RELEASE_REPOSITORY: YOUR_ORG/lint-ifchange
-  IFTTT_LINT_VERSION: v1.2.3
+  IFCHANGE_RELEASE_REPOSITORY: YOUR_ORG/ifchange
+  IFCHANGE_VERSION: v1.2.3
 
 jobs:
-  lint-ifchange:
+  ifchange:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,7 +23,7 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@v3.8.1
 
-      - name: Install lint-ifchange (prebuilt + verified)
+      - name: Install ifchange (prebuilt + verified)
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -31,13 +31,13 @@ jobs:
           set -euo pipefail
 
           TARGET="x86_64-unknown-linux-gnu"
-          ARCHIVE="lint-ifchange-${IFTTT_LINT_VERSION}-${TARGET}.tar.gz"
-          EXPECTED_IDENTITY="https://github.com/${IFTTT_LINT_RELEASE_REPOSITORY}/.github/workflows/release-binaries.yml@refs/tags/${IFTTT_LINT_VERSION}"
+          ARCHIVE="ifchange-${IFCHANGE_VERSION}-${TARGET}.tar.gz"
+          EXPECTED_IDENTITY="https://github.com/${IFCHANGE_RELEASE_REPOSITORY}/.github/workflows/release-binaries.yml@refs/tags/${IFCHANGE_VERSION}"
 
-          gh release download "$IFTTT_LINT_VERSION" --repo "$IFTTT_LINT_RELEASE_REPOSITORY" --pattern "$ARCHIVE"
-          gh release download "$IFTTT_LINT_VERSION" --repo "$IFTTT_LINT_RELEASE_REPOSITORY" --pattern "SHA256SUMS"
-          gh release download "$IFTTT_LINT_VERSION" --repo "$IFTTT_LINT_RELEASE_REPOSITORY" --pattern "SHA256SUMS.sig"
-          gh release download "$IFTTT_LINT_VERSION" --repo "$IFTTT_LINT_RELEASE_REPOSITORY" --pattern "SHA256SUMS.pem"
+          gh release download "$IFCHANGE_VERSION" --repo "$IFCHANGE_RELEASE_REPOSITORY" --pattern "$ARCHIVE"
+          gh release download "$IFCHANGE_VERSION" --repo "$IFCHANGE_RELEASE_REPOSITORY" --pattern "SHA256SUMS"
+          gh release download "$IFCHANGE_VERSION" --repo "$IFCHANGE_RELEASE_REPOSITORY" --pattern "SHA256SUMS.sig"
+          gh release download "$IFCHANGE_VERSION" --repo "$IFCHANGE_RELEASE_REPOSITORY" --pattern "SHA256SUMS.pem"
 
           cosign verify-blob SHA256SUMS \
             --signature SHA256SUMS.sig \
@@ -49,9 +49,9 @@ jobs:
           sha256sum -c SHA256SUMS.filtered
 
           tar -xzf "$ARCHIVE"
-          chmod +x lint-ifchange
+          chmod +x ifchange
           mkdir -p "$HOME/.local/bin"
-          mv lint-ifchange "$HOME/.local/bin/lint-ifchange"
+          mv ifchange "$HOME/.local/bin/ifchange"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Build diff
@@ -66,5 +66,5 @@ jobs:
             git diff "${{ github.event.before }}" "${{ github.sha }}" > changes.diff
           fi
 
-      - name: Run lint-ifchange
-        run: lint-ifchange changes.diff
+      - name: Run ifchange
+        run: ifchange changes.diff

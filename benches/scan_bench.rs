@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
+use ifchange::{parse_directives_from_content, validate_directive_uniqueness};
 use ignore::WalkBuilder;
-use lint_ifchange::{parse_directives_from_content, validate_directive_uniqueness};
 use std::fs;
 use tempfile::TempDir;
 

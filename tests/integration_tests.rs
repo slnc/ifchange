@@ -4,7 +4,7 @@ use std::process::Command;
 use tempfile::TempDir;
 
 fn binary_path() -> String {
-    let path = env!("CARGO_BIN_EXE_lint-ifchange");
+    let path = env!("CARGO_BIN_EXE_ifchange");
     path.to_string()
 }
 
@@ -155,7 +155,7 @@ fn labeled_change_missing() {
     ]);
     let (code, _stdout, stderr) = run_lint(&diff);
     assert_eq!(code, 1);
-    assert!(stderr.contains("expected changes in"), "stderr: {}", stderr);
+    assert!(stderr.contains("expected changes"), "stderr: {}", stderr);
 }
 
 #[test]
@@ -355,12 +355,12 @@ fn verbose_output() {
     let (code, _, stderr) = run_lint_with_args("", &["-v"]);
     assert_eq!(code, 0);
     assert!(
-        stderr.contains("[ifttt] scanned"),
+        stderr.contains("scan:"),
         "verbose should show scan summary, stderr: {}",
         stderr
     );
     assert!(
-        stderr.contains("[ifttt] validated"),
+        stderr.contains("lint:"),
         "verbose should show lint summary, stderr: {}",
         stderr
     );
@@ -862,7 +862,7 @@ fn target_in_diff_with_no_changed_lines_reports_expected_changes() {
     );
     let (code, _stdout, stderr) = run_lint(&diff);
     assert_eq!(code, 1);
-    assert!(stderr.contains("expected changes in"), "stderr: {}", stderr);
+    assert!(stderr.contains("expected changes"), "stderr: {}", stderr);
 }
 
 #[test]
@@ -1189,13 +1189,13 @@ fn verbose_shows_directive_pairs_and_summary() {
     let (code, _stdout, stderr) = run_lint_with_args(&diff, &["-v"]);
     assert_eq!(code, 0);
     assert!(
-        stderr.contains("IfChange -> ThenChange(b.ts)"),
-        "verbose should show directive pair, stderr: {}",
+        stderr.contains("lint:"),
+        "verbose should show lint header, stderr: {}",
         stderr
     );
     assert!(
-        stderr.contains("validated 1 directive pair"),
-        "verbose should show summary, stderr: {}",
+        stderr.contains("1 pair checked"),
+        "verbose should show pair count, stderr: {}",
         stderr
     );
 }
@@ -1221,7 +1221,7 @@ fn debug_implies_verbose() {
     assert_eq!(code, 0);
     // Debug should include verbose output
     assert!(
-        stderr.contains("validated 1 directive pair"),
+        stderr.contains("lint: 1 pair checked"),
         "debug should include verbose summary, stderr: {}",
         stderr
     );
@@ -1268,7 +1268,7 @@ fn scan_verbose_shows_summary() {
     assert_eq!(output.status.code().unwrap(), 0);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(
-        stderr.contains("[ifttt] scanned"),
+        stderr.contains("scan:"),
         "scan verbose should show summary, stderr: {}",
         stderr
     );

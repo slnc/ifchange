@@ -1,15 +1,15 @@
 #!/bin/sh
 set -eu
 
-REPO="slnc/lint-ifchange"
-BINARY="lint-ifchange"
+REPO="slnc/ifchange"
+BINARY="ifchange"
 DEFAULT_INSTALL_DIR="$HOME/.local/bin"
 
 usage() {
     cat <<EOF
 Usage: install.sh [OPTIONS]
 
-Install lint-ifchange from GitHub releases.
+Install ifchange from GitHub releases.
 
 Options:
     --version VERSION   Install a specific version (e.g. v0.1.0)
@@ -17,9 +17,9 @@ Options:
     --help              Show this help message
 
 Examples:
-    curl -fsSL https://raw.githubusercontent.com/slnc/lint-ifchange/main/install.sh | sh
-    curl -fsSL https://raw.githubusercontent.com/slnc/lint-ifchange/main/install.sh | sh -s -- --version v0.1.0
-    curl -fsSL https://raw.githubusercontent.com/slnc/lint-ifchange/main/install.sh | sh -s -- --prefix /usr/local
+    curl -fsSL https://raw.githubusercontent.com/slnc/ifchange/main/install.sh | sh
+    curl -fsSL https://raw.githubusercontent.com/slnc/ifchange/main/install.sh | sh -s -- --version v0.1.0
+    curl -fsSL https://raw.githubusercontent.com/slnc/ifchange/main/install.sh | sh -s -- --prefix /usr/local
 EOF
     exit 0
 }

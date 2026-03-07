@@ -1,14 +1,14 @@
 {
-  "name": "lint-ifchange",
+  "name": "ifchange",
   "version": "0.1.0",
   "description": "A fast linter for enforcing conditional change directives in source code",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/slnc/lint-ifchange"
+    "url": "https://github.com/slnc/ifchange"
   },
   "bin": {
-    "lint-ifchange": "bin/lint-ifchange"
+    "ifchange": "bin/ifchange"
   },
   "scripts": {
     "postinstall": "node install.js"

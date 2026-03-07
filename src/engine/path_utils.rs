@@ -45,8 +45,8 @@ pub(super) fn normalize_path_str(path: &str) -> String {
 
 pub(super) fn format_if_context(file: &str, label: Option<&str>, line: usize) -> String {
     match label {
-        Some(lbl) => format!("[ifttt] {}#{}:{}", file, lbl, line),
-        None => format!("[ifttt] {}:{}", file, line),
+        Some(lbl) => format!("{}#{}:{}", file, lbl, line),
+        None => format!("{}:{}", file, line),
     }
 }
 
@@ -86,10 +86,7 @@ mod tests {
 
     #[test]
     fn format_if_context_variants() {
-        assert_eq!(format_if_context("f.rs", None, 42), "[ifttt] f.rs:42");
-        assert_eq!(
-            format_if_context("f.rs", Some("lbl"), 42),
-            "[ifttt] f.rs#lbl:42"
-        );
+        assert_eq!(format_if_context("f.rs", None, 42), "f.rs:42");
+        assert_eq!(format_if_context("f.rs", Some("lbl"), 42), "f.rs#lbl:42");
     }
 }

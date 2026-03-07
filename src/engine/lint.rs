@@ -14,14 +14,15 @@ use crate::model::LintResult;
 
 pub fn lint_diff(
     diff_text: &str,
-    verbose: bool,
+    _verbose: bool,
     debug: bool,
     ignore_list: &[String],
 ) -> LintResult {
     let ignore_patterns = parse_ignore_list(ignore_list);
     let mut messages: Vec<String> = Vec::new();
-    let mut verbose_messages: Vec<String> = Vec::new();
+    let mut debug_messages: Vec<String> = Vec::new();
     let mut error_count: usize = 0;
+    let mut pairs_checked: usize = 0;
 
     let changed_files_map = parse_changed_lines(diff_text);
     let changed_lines_map = build_changed_lines_map(&changed_files_map);
@@ -86,14 +87,14 @@ pub fn lint_diff(
         if should_ignore_target(target, &ignore_patterns) {
             if debug {
                 eprintln!(
-                    "[ifttt] Ignoring orphan ThenChange '{}' in {}:{}",
+                    "Ignoring orphan ThenChange '{}' in {}:{}",
                     target, file, line
                 );
             }
             continue;
         }
         messages.push(format!(
-            "[ifttt] {}:{} -> unexpected ThenChange '{}' without preceding IfChange",
+            "error: {}:{}: unexpected ThenChange '{}' without preceding IfChange",
             file, line, target
         ));
         error_count += 1;
@@ -103,10 +104,7 @@ pub fn lint_diff(
         if let Some(lbl) = label {
             if should_ignore_if_label(file, lbl, &ignore_patterns) {
                 if debug {
-                    eprintln!(
-                        "[ifttt] Ignoring orphan IfChange '{}' in {}:{}",
-                        lbl, file, line
-                    );
+                    eprintln!("Ignoring orphan IfChange '{}' in {}:{}", lbl, file, line);
                 }
                 continue;
             }
@@ -116,7 +114,7 @@ pub fn lint_diff(
             None => String::new(),
         };
         messages.push(format!(
-            "[ifttt] {}:{} -> missing ThenChange after IfChange{}",
+            "error: {}:{}: missing ThenChange after IfChange{}",
             file, line, lbl_str
         ));
         error_count += 1;
@@ -164,8 +162,8 @@ pub fn lint_diff(
                     }
                     let if_ctx = format_if_context(&p.file, p.if_label.as_deref(), p.if_line);
                     messages.push(format!(
-                        "{} -> ThenChange '{}' (line {}): target file '{}' not found.",
-                        if_ctx, p.then_target, p.then_line, file
+                        "error: {} -> {}: target file not found",
+                        if_ctx, p.then_target
                     ));
                     error_count += 1;
                 }
@@ -199,9 +197,11 @@ pub fn lint_diff(
             continue;
         }
 
-        if verbose {
-            verbose_messages.push(format!(
-                "[ifttt] {}:{} IfChange -> ThenChange({})",
+        pairs_checked += 1;
+
+        if debug {
+            debug_messages.push(format!(
+                "  {}:{} IfChange -> ThenChange({})",
                 p.file, p.if_line, p.then_target
             ));
         }
@@ -214,8 +214,8 @@ pub fn lint_diff(
                 continue;
             }
             messages.push(format!(
-                "{} -> ThenChange '{}' (line {}): target file '{}' not changed.",
-                if_ctx, p.then_target, p.then_line, p.then_target_path
+                "error: {} -> {}: target file not changed",
+                if_ctx, p.then_target
             ));
             error_count += 1;
             continue;
@@ -242,8 +242,8 @@ pub fn lint_diff(
             match target_index.label_ranges.get(label) {
                 None => {
                     messages.push(format!(
-                        "{} -> ThenChange '{}' (line {}): label '{}' not found in '{}'. Available labels: {}",
-                        if_ctx, p.then_target, p.then_line, label, p.then_target_path, available
+                        "error: {} -> {}: label '{}' not found. Available labels: {}",
+                        if_ctx, p.then_target, label, available
                     ));
                     error_count += 1;
                 }
@@ -252,21 +252,9 @@ pub fn lint_diff(
                         .iter()
                         .any(|&line| line >= lr.start_line && line <= lr.end_line);
                     if !in_range {
-                        let sorted = target_changes
-                            .iter()
-                            .map(|l| l.to_string())
-                            .collect::<Vec<_>>()
-                            .join(", ");
                         messages.push(format!(
-                            "{} -> ThenChange '{}' (line {}): expected changes in '{}#{}' ({}-{}), but none found. Actual changes in file: [{}]",
-                            if_ctx,
-                            p.then_target,
-                            p.then_line,
-                            p.then_target_path,
-                            label,
-                            lr.start_line,
-                            lr.end_line,
-                            sorted
+                            "error: {} -> {}: expected changes in block ({}-{}), but none found",
+                            if_ctx, p.then_target, lr.start_line, lr.end_line,
                         ));
                         error_count += 1;
                     }
@@ -274,28 +262,18 @@ pub fn lint_diff(
             }
         } else if target_changes.is_empty() {
             messages.push(format!(
-                "{} -> ThenChange '{}' (line {}): expected changes in '{}', but none found.",
-                if_ctx, p.then_target, p.then_line, p.then_target_path
+                "error: {} -> {}: expected changes, but none found",
+                if_ctx, p.then_target
             ));
             error_count += 1;
         }
     }
 
-    if verbose {
-        let pair_count = verbose_messages.len();
-        let file_count = changed_files.len();
-        verbose_messages.push(format!(
-            "[ifttt] validated {} directive {} across {} {}",
-            pair_count,
-            if pair_count == 1 { "pair" } else { "pairs" },
-            file_count,
-            if file_count == 1 { "file" } else { "files" },
-        ));
-    }
-
     LintResult {
         exit_code: if error_count > 0 { 1 } else { 0 },
         messages,
-        verbose_messages,
+        debug_messages,
+        pairs_checked,
+        files_checked: changed_files.len(),
     }
 }

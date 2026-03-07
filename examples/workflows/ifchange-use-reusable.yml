@@ -1,4 +1,4 @@
-name: ifttt-lint
+name: ifchange
 
 on:
   pull_request:
@@ -7,11 +7,11 @@ on:
       - main
 
 jobs:
-  ifttt-lint:
-    uses: YOUR_ORG/lint-ifchange/.github/workflows/ifttt-lint-reusable.yml@v1
+  ifchange:
+    uses: YOUR_ORG/ifchange/.github/workflows/ifchange-reusable.yml@v1
     with:
       binary_source: prebuilt
-      release_repository: YOUR_ORG/lint-ifchange
+      release_repository: YOUR_ORG/ifchange
       binary_version: v1.2.3
       base_ref: ${{ github.base_ref }}
       diff_from: ${{ github.event.before }}

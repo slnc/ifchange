@@ -382,6 +382,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d3067d79b975e8844ca9eb072e16b31c3c1c36928edf9c6789548c524d0d954"
 
 [[package]]
+name = "ifchange"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "criterion",
+ "globset",
+ "ignore",
+ "is-terminal",
+ "rayon",
+ "regex",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "ignore"
 version = "0.4.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -462,21 +477,6 @@ name = "libc"
 version = "0.2.182"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6800badb6cb2082ffd7b6a67e6125bb39f18782f793520caee8cb8846be06112"
-
-[[package]]
-name = "lint-ifchange"
-version = "0.1.0"
-dependencies = [
- "clap",
- "criterion",
- "globset",
- "ignore",
- "is-terminal",
- "rayon",
- "regex",
- "tempfile",
- "thiserror",
-]
 
 [[package]]
 name = "linux-raw-sys"

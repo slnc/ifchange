@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use lint_ifchange::lint_diff;
+use ifchange::lint_diff;
 use std::fs;
 use tempfile::TempDir;
 

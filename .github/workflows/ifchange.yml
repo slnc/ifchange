@@ -1,4 +1,4 @@
-name: Lint IfChange
+name: IfChange
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  lint-ifchange:
+  ifchange:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -17,7 +17,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Build lint-ifchange
+      - name: Build ifchange
         run: cargo install --path .
 
       - uses: ./

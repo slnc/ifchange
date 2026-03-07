@@ -1,4 +1,4 @@
-"""Entry point for lint-ifchange."""
+"""Entry point for ifchange."""
 
 import os
 import sys

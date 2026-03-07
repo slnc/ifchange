@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Performance comparison: Rust vs TypeScript ifttt-lint
+# Performance comparison: Rust vs TypeScript ifchange
 set -euo pipefail
 
-RUST_BIN="$(pwd)/target/release/lint-ifchange"
+RUST_BIN="$(pwd)/target/release/ifchange"
 TS_DIR="../ifttt-lint"
 TOTAL_FILES=5000
 TMP_DIR=$(mktemp -d)

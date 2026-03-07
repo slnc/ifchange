@@ -19,7 +19,7 @@ pub fn validate_directive_uniqueness(directives: &[Directive], file_path: &str) 
 
         if !seen.insert(name.to_string()) {
             errors.push(format!(
-                "[ifttt] {}:{} -> duplicate directive label '{}'",
+                "error: {}:{}: duplicate directive label '{}'",
                 file_path, line, name
             ));
         }

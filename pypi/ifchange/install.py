@@ -1,4 +1,4 @@
-"""Download and cache the lint-ifchange binary from GitHub releases."""
+"""Download and cache the ifchange binary from GitHub releases."""
 
 import hashlib
 import io
@@ -14,8 +14,8 @@ from pathlib import Path
 
 from . import __version__
 
-REPO = "slnc/lint-ifchange"
-BINARY = "lint-ifchange"
+REPO = "slnc/ifchange"
+BINARY = "ifchange"
 
 PLATFORM_MAP = {
     ("Linux", "x86_64"): "x86_64-unknown-linux-gnu",
@@ -45,7 +45,7 @@ def get_bin_path():
 
 
 def _fetch(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "lint-ifchange-pypi"})
+    req = urllib.request.Request(url, headers={"User-Agent": "ifchange-pypi"})
     with urllib.request.urlopen(req) as resp:
         return resp.read()
 

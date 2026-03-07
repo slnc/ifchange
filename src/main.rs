@@ -1,3 +1,3 @@
 fn main() {
-    lint_ifchange::app::run_from_env();
+    ifchange::app::run_from_env();
 }
