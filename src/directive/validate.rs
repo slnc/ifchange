@@ -4,7 +4,7 @@ use crate::model::Directive;
 pub fn validate_directive_uniqueness(directives: &[Directive], file_path: &str) -> Vec<String> {
     use std::collections::HashSet;
 
-    let mut seen = HashSet::new();
+    let mut seen: HashSet<&str> = HashSet::new();
     let mut errors = Vec::new();
 
     for directive in directives {
@@ -17,7 +17,7 @@ pub fn validate_directive_uniqueness(directives: &[Directive], file_path: &str) 
             _ => continue,
         };
 
-        if !seen.insert(name.to_string()) {
+        if !seen.insert(name) {
             errors.push(format!(
                 "error: {}:{}: duplicate directive label '{}'",
                 file_path, line, name

@@ -5,34 +5,30 @@ use crate::model::FileChanges;
 /// Decode C-style octal escape sequences (e.g., `\360\237\224\216`) into UTF-8
 /// bytes and then into a String. Non-escape characters pass through unchanged.
 fn decode_octal_escapes(s: &str) -> String {
-    let mut bytes: Vec<u8> = Vec::with_capacity(s.len());
-    let chars: Vec<char> = s.chars().collect();
+    let src = s.as_bytes();
+    let mut out: Vec<u8> = Vec::with_capacity(src.len());
     let mut i = 0;
 
-    while i < chars.len() {
-        if chars[i] == '\\' && i + 3 < chars.len() {
-            // Try to parse a 3-digit octal escape.
-            let d1 = chars[i + 1];
-            let d2 = chars[i + 2];
-            let d3 = chars[i + 3];
+    while i < src.len() {
+        if src[i] == b'\\' && i + 3 < src.len() {
+            let d1 = src[i + 1];
+            let d2 = src[i + 2];
+            let d3 = src[i + 3];
             if d1.is_ascii_digit() && d2.is_ascii_digit() && d3.is_ascii_digit() {
-                let octal_str: String = [d1, d2, d3].iter().collect();
-                if let Ok(val) = u8::from_str_radix(&octal_str, 8) {
-                    bytes.push(val);
+                if let Ok(val) =
+                    u8::from_str_radix(std::str::from_utf8(&src[i + 1..i + 4]).unwrap(), 8)
+                {
+                    out.push(val);
                     i += 4;
                     continue;
                 }
             }
         }
-        // Regular character: encode as UTF-8 bytes.
-        let ch = chars[i];
-        let mut buf = [0u8; 4];
-        let encoded = ch.encode_utf8(&mut buf);
-        bytes.extend_from_slice(encoded.as_bytes());
+        out.push(src[i]);
         i += 1;
     }
 
-    String::from_utf8_lossy(&bytes).into_owned()
+    String::from_utf8_lossy(&out).into_owned()
 }
 
 /// Strip surrounding double quotes from a path if present.
@@ -76,11 +72,9 @@ fn has_valid_prefix(path: &str) -> bool {
 pub fn parse_changed_lines(diff_text: &str) -> HashMap<String, FileChanges> {
     let mut result: HashMap<String, FileChanges> = HashMap::new();
 
-    let raw_lines: Vec<&str> = diff_text.lines().collect();
-
     // Filter out main diff header lines and spurious ---/+++ lines.
-    let lines: Vec<&str> = raw_lines
-        .iter()
+    let lines: Vec<&str> = diff_text
+        .lines()
         .filter(|line| {
             if line.starts_with("diff ") {
                 return false;
@@ -102,7 +96,6 @@ pub fn parse_changed_lines(diff_text: &str) -> HashMap<String, FileChanges> {
             }
             true
         })
-        .copied()
         .collect();
 
     let mut i = 0;

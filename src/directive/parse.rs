@@ -134,7 +134,6 @@ pub fn parse_directives_from_content(
                     let directive_line = current_line;
 
                     // First try within this comment's remaining lines
-                    let start = line_idx;
                     line_idx += 1;
                     let mut found_close = false;
                     while line_idx < comment_lines.len() {
@@ -172,7 +171,6 @@ pub fn parse_directives_from_content(
                         }
                     }
 
-                    let _ = start;
                     if let Some(caps) = pats.then_change_array.captures(&accumulated) {
                         let inner = caps.get(1).unwrap().as_str();
                         for target in parse_array_targets(inner) {
