@@ -57,7 +57,11 @@ pub fn lint_diff(
                     error_count += 1;
                 }
 
-                pairs.extend(outcome.index.pairs.iter().cloned());
+                let FileIndex {
+                    pairs: file_pairs,
+                    label_ranges,
+                } = outcome.index;
+                pairs.extend(file_pairs);
                 orphan_then.extend(
                     outcome
                         .orphan_then
@@ -70,7 +74,13 @@ pub fn lint_diff(
                         .into_iter()
                         .map(|(line, label)| (file.clone(), line, label)),
                 );
-                file_indices.insert(file.clone(), outcome.index);
+                file_indices.insert(
+                    file.clone(),
+                    FileIndex {
+                        pairs: Vec::new(),
+                        label_ranges,
+                    },
+                );
             }
             Err(e) => {
                 messages.push(e);
@@ -120,16 +130,16 @@ pub fn lint_diff(
         error_count += 1;
     }
 
-    let target_files: HashSet<String> = pairs.iter().map(|p| p.then_target_path.clone()).collect();
-    let uncached_targets: Vec<String> = target_files
+    let target_files: HashSet<&str> = pairs.iter().map(|p| p.then_target_path.as_str()).collect();
+    let uncached_targets: Vec<&str> = target_files
         .iter()
-        .filter(|path| !file_indices.contains_key(path.as_str()))
-        .cloned()
+        .filter(|path| !file_indices.contains_key(**path))
+        .copied()
         .collect();
 
     let phase2: Vec<(String, TargetLoad)> = uncached_targets
         .par_iter()
-        .map(|file| (file.clone(), index_target_file(file)))
+        .map(|file| (file.to_string(), index_target_file(file)))
         .collect();
 
     let mut unavailable_targets: HashSet<String> = HashSet::new();
