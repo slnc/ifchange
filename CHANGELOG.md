@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.0](https://github.com/slnc/ifchange/compare/v0.1.0...v0.2.0) (2026-03-07)
+
+
+### Features
+
+* add pre-commit hook manifest for ifchange ([c182811](https://github.com/slnc/ifchange/commit/c182811bf1d8e5e0f64b0417cfd10496cc87816c))
+
+
+### Bug Fixes
+
+* avoid direct interpolation of user args in action runner ([#12](https://github.com/slnc/ifchange/issues/12)) ([584112a](https://github.com/slnc/ifchange/commit/584112a4819e79fb0118f40a41ec333f8caa3229))
+* configure git identity for tag operations in release workflow ([4a17adb](https://github.com/slnc/ifchange/commit/4a17adb7ac03418ed74debb10d76f0f6db3f9657))
+* default installer version channel to latest ([dc0e1f1](https://github.com/slnc/ifchange/commit/dc0e1f1a4e98ddfd68019a117ecccae42d89c6a7))
+
+
+### Refactoring
+
+* use shell adapter for pre-commit hooks ([c1954a9](https://github.com/slnc/ifchange/commit/c1954a9dab8a569b20565ba0496aa4129e8f26e1))
+
 ## 0.1.0 (2026-03-07)
 
 
