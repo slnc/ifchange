@@ -2,7 +2,7 @@ name: Release Please
 
 on:
   workflow_run:
-    workflows: ["Test"]
+    workflows: ["CI"]
     types: [completed]
     branches: [main]
 
