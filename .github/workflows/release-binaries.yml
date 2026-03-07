@@ -214,9 +214,12 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Move major version tag
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           major="v${GITHUB_REF_NAME#v}"
