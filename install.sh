@@ -12,7 +12,7 @@ Usage: install.sh [OPTIONS]
 Install ifchange from GitHub releases.
 
 Options:
-    --version VERSION   Install a specific version (e.g. v0.1.0)
+    --version VERSION   Install a specific version (e.g. v0.1.0) or `latest` (default)
     --prefix DIR        Install to DIR/bin (default: ~/.local)
     --help              Show this help message
 
@@ -34,7 +34,7 @@ info() {
 }
 
 # Parse arguments
-VERSION=""
+VERSION="latest"
 INSTALL_DIR=""
 
 while [ $# -gt 0 ]; do
@@ -107,8 +107,8 @@ else
     error "either curl or wget is required"
 fi
 
-# Fetch latest version if not specified
-if [ -z "$VERSION" ]; then
+# Resolve latest version when requested
+if [ "$VERSION" = "latest" ]; then
     info "Fetching latest release..."
     VERSION=$(download "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
     [ -n "$VERSION" ] || error "failed to determine latest version"
