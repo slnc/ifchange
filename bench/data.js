@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772883955070,
+  "lastUpdate": 1772884045685,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -767,6 +767,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 60426113,
             "range": "± 666725",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "distinct": true,
+          "id": "ef0e00f826db5d6e86d8626b4bd68b2fe2eee194",
+          "message": "ci: consolidate checks into CI workflow",
+          "timestamp": "2026-03-07T12:44:39+01:00",
+          "tree_id": "142d08a094675d4aa560c47c847183a9079c90f4",
+          "url": "https://github.com/slnc/ifchange/commit/ef0e00f826db5d6e86d8626b4bd68b2fe2eee194"
+        },
+        "date": 1772884045440,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 2116391,
+            "range": "± 10009",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7055516,
+            "range": "± 138680",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 37556846,
+            "range": "± 1274226",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 61071360,
+            "range": "± 1829139",
             "unit": "ns/iter"
           }
         ]
