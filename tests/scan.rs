@@ -106,6 +106,50 @@ fn scan_mode_skips_binary_files() {
 }
 
 #[test]
+fn scan_mode_lowercase_directives() {
+    let dir = TempDir::new().unwrap();
+    write_files(
+        dir.path(),
+        &[(
+            "lower.ts",
+            "// lint.ifchange(\"lbl\")\nconst v = 1;\n// lint.thenchange(\"other.ts\")\n",
+        )],
+    );
+    let output = Command::new(binary_path())
+        .args(["--no-lint", "-s", &dir.path().to_string_lossy(), "-v"])
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code().unwrap(), 0);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("1 file") || stderr.contains("1 directive"),
+        "scan should detect lowercase directives, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn scan_mode_lowercase_duplicate_labels() {
+    let dir = TempDir::new().unwrap();
+    write_files(
+        dir.path(),
+        &[(
+            "dup_lower.ts",
+            "// lint.ifchange(\"foo\")\n// lint.ifchange(\"foo\")\n",
+        )],
+    );
+    let output = Command::new(binary_path())
+        .args(["--no-lint", "-s", &dir.path().to_string_lossy()])
+        .output()
+        .unwrap();
+    assert_eq!(
+        output.status.code().unwrap(),
+        1,
+        "duplicate lowercase labels should be detected as errors"
+    );
+}
+
+#[test]
 fn scan_verbose_shows_summary() {
     let dir = TempDir::new().unwrap();
     write_files(
