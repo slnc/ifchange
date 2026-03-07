@@ -58,15 +58,15 @@ Marks the start of a guarded block. When lines inside this block change, all `Th
 ```python
 # LINT.IfChange
 VALUE = 42
-# LINT.ThenChange("constants.py")
+# LINT.ThenChange(constants.py)
 ```
 
 With a label (for targeted cross-references):
 
 ```python
-# LINT.IfChange("feature")
+# LINT.IfChange(feature)
 FEATURE_FLAG = True
-# LINT.ThenChange("config.py#feature")
+# LINT.ThenChange(config.py#feature)
 ```
 
 All accepted formats:
@@ -143,7 +143,7 @@ Label names can contain letters, numbers, hyphens, underscores, and dots.
 Point to a label in the same file using `#label` without a filename:
 
 ```python
-# LINT.ThenChange("#other-section")
+# LINT.ThenChange(#other-section)
 ```
 
 ### Cross-references
@@ -218,6 +218,32 @@ chmod +x .git/hooks/pre-commit
 
 **Special files** — `.dockerfile` `.gitignore`
 <!-- LINT.ThenChange("src/comment/extractor.rs") -->
+
+## Recommended AGENTS.md
+
+Add the following to your repository's `AGENTS.md` (or equivalent AI-agent instructions file) so coding agents use `lint-ifchange` directives correctly:
+
+```markdown
+## Cross-file dependencies (lint-ifchange)
+
+This repo uses `lint-ifchange` to enforce that related code changes together.
+CI runs `git diff ... | lint-ifchange` on every PR.
+
+### Rules for AI agents
+
+- When you change code inside a `LINT.IfChange` / `LINT.ThenChange` block, you MUST also change every file (and label) listed in the `ThenChange`.
+- When you add a new cross-file dependency, fence BOTH sides:
+  - Source file: wrap the guarded lines with `LINT.IfChange` … `LINT.ThenChange(other-file.ext)`.
+  - Target file: if only a specific section matters, mark it with `LINT.Label(name)` … `LINT.EndLabel` and reference it as `ThenChange(other-file.ext#name)`.
+- Use the comment style native to the file's language (`//`, `#`, `<!-- -->`, `--`, etc.).
+- Directive keywords are case-insensitive (`LINT.IfChange`, `lint.ifchange`, etc. all work). File paths and label names are case-sensitive.
+- Prefer labeled blocks (`LINT.IfChange(feature)`) over bare ones when more than one fence exists in a file.
+- For multiple targets use comma-separated or array syntax:
+  `LINT.ThenChange(a.py, b.py)` or `LINT.ThenChange([a.py, b.py])`.
+- Self-references use `#label` with no filename: `LINT.ThenChange(#other-section)`.
+- Place fences on the source-of-truth side pointing at derived files. Use bidirectional fences only when both sides are live code.
+- Run `lint-ifchange -c .` to validate directive syntax before committing.
+```
 
 ## [Architecture](docs/ARCHITECTURE.md) · [Contributing](docs/CONTRIBUTING.md) · [License (MIT)](LICENSE)
 
