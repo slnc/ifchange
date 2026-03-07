@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772872232489,
+  "lastUpdate": 1772872472367,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -191,6 +191,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 37577162,
             "range": "± 101210",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "distinct": true,
+          "id": "7b48f487100afba04b7e35f62c70dcbff5bc0239",
+          "message": "ci: set release-please manifest to 0.0.0 for initial release",
+          "timestamp": "2026-03-07T09:32:44+01:00",
+          "tree_id": "f92d6cd2e852c0b381b7afb15db045e5db1111ed",
+          "url": "https://github.com/slnc/ifchange/commit/7b48f487100afba04b7e35f62c70dcbff5bc0239"
+        },
+        "date": 1772872471861,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 2108655,
+            "range": "± 5808",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7039118,
+            "range": "± 56998",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 37026536,
+            "range": "± 1499495",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 60815664,
+            "range": "± 1001046",
             "unit": "ns/iter"
           }
         ]
