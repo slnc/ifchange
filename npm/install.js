@@ -4,7 +4,7 @@
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
+const { execFileSync } = require("child_process");
 const os = require("os");
 const crypto = require("crypto");
 
@@ -89,9 +89,9 @@ async function install() {
 
   try {
     if (ext === "zip") {
-      execSync(`powershell -Command "Expand-Archive -Path '${archivePath}' -DestinationPath '${tmpDir}'"`, { stdio: "ignore" });
+      execFileSync("powershell", ["-Command", `Expand-Archive -Path '${archivePath}' -DestinationPath '${tmpDir}'`], { stdio: "ignore" });
     } else {
-      execSync(`tar -xzf "${archivePath}" -C "${tmpDir}"`, { stdio: "ignore" });
+      execFileSync("tar", ["-xzf", archivePath, "-C", tmpDir], { stdio: "ignore" });
     }
 
     // Find binary
@@ -103,7 +103,7 @@ async function install() {
     // Place native binary directly into bin/
     fs.mkdirSync(BIN_DIR, { recursive: true });
     fs.copyFileSync(extracted, BIN_PATH);
-    fs.chmodSync(BIN_PATH, 0o755);
+    fs.chmodSync(BIN_PATH, 0o555);
     console.log(`Installed ${BINARY} to ${BIN_PATH}`);
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });

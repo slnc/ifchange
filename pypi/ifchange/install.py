@@ -98,7 +98,10 @@ def download_binary():
     else:
         with tarfile.open(fileobj=io.BytesIO(archive_data), mode="r:gz") as tf:
             for member in tf.getmembers():
-                if member.name.endswith(bin_name):
+                # Guard against path traversal (e.g. ../../etc/passwd)
+                if member.name.startswith("/") or ".." in member.name.split("/"):
+                    raise RuntimeError(f"Unsafe path in archive: {member.name}")
+                if member.name.endswith(bin_name) and member.isfile():
                     f = tf.extractfile(member)
                     if f:
                         extracted = f.read()
