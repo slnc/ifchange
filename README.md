@@ -67,15 +67,18 @@ ifchange --no-lint -s ./src
 git diff HEAD~1 | ifchange --no-scan
 
 # Ignore specific files or labeled sections
-ifchange -i 'schema.sql' -i 'config.toml#db' changes.diff
+ifchange -i '**/*.sql' -i 'config.toml#db' changes.diff
 ```
+
+`--ignore` uses glob patterns (`*`, `?`, `**`) and matches both full relative paths and basenames.
 
 | Flag | Description |
 |------|-------------|
 | `-w, --warn` | Warn instead of failing (exit 0) |
 | `-v, --verbose` | Verbose logging to stderr |
+| `--debug` | Internal processing logs (implies `--verbose`) |
 | `-j, --jobs <N>` | Thread count (0 = auto) |
-| `-i, --ignore <pattern>` | Ignore file or file#label (repeatable, globs) |
+| `-i, --ignore <pattern>` | Ignore path glob or `path-glob#label` (repeatable) |
 | `-s, --scan <dir>` | Scan directory for directive errors (default: `.`) |
 | `--no-scan` | Skip directive syntax scan |
 | `--no-lint` | Skip diff-based lint |
