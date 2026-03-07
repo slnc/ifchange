@@ -34,8 +34,8 @@ ifchange --no-lint -s ./src
 # Lint only: skip directive syntax scan
 git diff HEAD~1 | ifchange --no-scan
 
-# Ignore files or labels
-ifchange -i '*.json' -i 'config.toml#db' changes.diff
+# Ignore specific files or labeled sections
+ifchange -i 'schema.sql' -i 'config.toml#db' changes.diff
 ```
 
 | Flag | Description |
@@ -110,7 +110,7 @@ inputs:
 **All accepted IfChange formats:**
 
 ```text
-LINT.IfChange                     # bare (unlabeled)
+LINT.IfChange                    # bare (unlabeled)
 LINT.IfChange("my-label")        # labeled, double quotes
 LINT.IfChange('my-label')        # labeled, single quotes
 LINT.IfChange(my-label)          # labeled, unquoted
@@ -119,11 +119,11 @@ LINT.IfChange(my-label)          # labeled, unquoted
 **All accepted ThenChange formats:**
 
 ```text
-LINT.ThenChange(other.py)                          # single target
-LINT.ThenChange("other.py#label")                  # with label reference
-LINT.ThenChange(#label)                            # self-reference (same file)
-LINT.ThenChange("a.py", "b.py")                    # comma-separated
-LINT.ThenChange(["a.ts", "config.py#db", "c.sql"]) # array syntax
+LINT.ThenChange(other.py)                           # single target
+LINT.ThenChange("other.py#label")                   # with label reference
+LINT.ThenChange(#label)                             # self-reference (same file)
+LINT.ThenChange("a.py", "b.py")                     # comma-separated
+LINT.ThenChange(["a.ts", "config.py#db", "c.sql"])  # array syntax
 ```
 
 Multi-line array (each line in its own comment):
@@ -207,6 +207,26 @@ chmod +x .git/hooks/pre-commit
 |------|-----:|----------:|---------:|
 | **Lint** | **28 ms** | 714 ms | **~25x** |
 | **Check** | **15 ms** | 387 ms | **~26x** |
+
+## Versioning
+
+`ifchange` follows [semver](https://semver.org/). The **stable API surface** (breaking change = major bump post-1.0):
+
+- CLI flags and their documented behavior
+- Exit codes: `0` ok, `1` lint errors, `2` fatal error
+- Error output format: `error: <file>:<line>: <message>` prefix and location
+- Summary line format: `found N error(s) (...)`
+- Directive syntax: `IfChange`, `ThenChange`, `Label`, `EndLabel`
+
+**Not stable** (may change in minor or patch releases):
+
+- Exact error message wording after the location prefix
+- Debug/verbose output format and content
+- Color codes and terminal formatting
+- Help text wording
+- New lint rules or error types (adding rules is not a breaking change)
+
+During `0.x`, minor versions may include breaking changes.
 
 <!-- LINT.IfChange("supported-languages") -->
 ## Supported Languages
