@@ -239,7 +239,7 @@ chmod +x .git/hooks/pre-commit
 | `.cpp` | `.gd` | `.ksh` | `.prolog` | `.svg` | `.zsh` |
 
 **Special files** — `Dockerfile` (including `Dockerfile.*` variants), `.gitignore`
-<!-- LINT.ThenChange("src/comment/extractor.rs") -->
+<!-- LINT.ThenChange("src/comment/extract.rs") -->
 
 ## Recommended AGENTS.md
 

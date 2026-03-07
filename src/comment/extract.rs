@@ -1,4 +1,4 @@
-/// A comment extracted from source code.
+/// A single comment extracted from source code.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Comment {
     /// 1-based line number where the comment starts.
