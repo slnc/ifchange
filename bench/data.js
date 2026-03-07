@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772893341929,
+  "lastUpdate": 1772895226746,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -911,6 +911,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 58774818,
             "range": "± 952303",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "distinct": true,
+          "id": "455f15e6ac58240c9a29ed92986a008fdd1c827f",
+          "message": "refactor: merge --debug into --verbose\n\n- Remove `--debug` flag, fold all debug output into `--verbose`\n- Simplify error messages (\"unchanged\" instead of verbose phrases)\n- Add `IFCHANGE_DISABLED` env var to pre-commit hook\n- Add `version` to clap CLI\n\n`--verbose` added very little over default output. `--debug` had all\nthe useful detail. Two levels of verbosity weren't justified — merge\nthem into one.",
+          "timestamp": "2026-03-07T15:50:27+01:00",
+          "tree_id": "b286ae0fe3383c012386e52d52e131639075e584",
+          "url": "https://github.com/slnc/ifchange/commit/455f15e6ac58240c9a29ed92986a008fdd1c827f"
+        },
+        "date": 1772895226287,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 3319591,
+            "range": "± 70502",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7397714,
+            "range": "± 336275",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 40078618,
+            "range": "± 1446589",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 60905544,
+            "range": "± 823371",
             "unit": "ns/iter"
           }
         ]
