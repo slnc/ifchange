@@ -242,6 +242,7 @@ repos:
 ```
 
 `ifchange-pypi` downloads the platform binary from GitHub Releases and verifies checksums automatically.
+Use `ifchange` for the fastest runtime path; use `ifchange-pypi` for easiest setup when you don't want to preinstall the binary.
 
 ## Performance
 

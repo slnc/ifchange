@@ -47,6 +47,8 @@ repos:
       - id: ifchange-pypi
 ```
 
+Use `ifchange` for the fastest runtime path; use `ifchange-pypi` for easiest setup.
+
 ## What runs by default
 
 Every invocation runs both **directive syntax checking** (validates structure across the repo) and **diff-based linting** (validates cross-file dependencies). Use `--no-scan` or `--no-lint` to skip either phase.
