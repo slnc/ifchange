@@ -2,7 +2,7 @@ use std::path::Path;
 
 use globset::{Glob, GlobMatcher};
 
-use crate::engine::path_utils::split_target_label;
+use crate::engine::resolve::split_target_label;
 
 #[derive(Debug, Clone)]
 enum NameMatcher {

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use super::{ChangedFileOutcome, FileIndex, Pair, TargetLoad};
 use crate::directive::{parse_file_directives, validate_directive_uniqueness};
-use crate::engine::path_utils::{resolve_target_path, split_target_label};
-use crate::engine::types::{ChangedFileOutcome, FileIndex, Pair, TargetLoad};
+use crate::engine::resolve::{resolve_target_path, split_target_label};
 use crate::model::{Directive, FileChanges, LineRange};
 
 pub(super) fn build_changed_lines_map(

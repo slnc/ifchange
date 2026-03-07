@@ -3,13 +3,13 @@ use std::path::Path;
 
 use rayon::prelude::*;
 
+use super::{FileIndex, Pair, TargetLoad};
 use crate::diff::parse_changed_lines;
 use crate::engine::ignore::{
     parse_ignore_list, should_ignore_file, should_ignore_if_label, should_ignore_target,
 };
 use crate::engine::index::{build_changed_lines_map, index_changed_file, index_target_file};
-use crate::engine::path_utils::format_if_context;
-use crate::engine::types::{FileIndex, Pair, TargetLoad};
+use crate::engine::resolve::format_if_context;
 use crate::model::LintResult;
 
 pub fn lint_diff(

@@ -1,4 +1,4 @@
-pub mod app;
+pub mod cli;
 mod comment;
 mod diff;
 mod directive;

@@ -1,3 +1,3 @@
-pub mod extractor;
+pub mod extract;
 
-pub use extractor::extract_comments;
+pub use extract::extract_comments;

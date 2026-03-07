@@ -1,3 +1,3 @@
 fn main() {
-    ifchange::app::run_from_env();
+    ifchange::cli::run_from_env();
 }
