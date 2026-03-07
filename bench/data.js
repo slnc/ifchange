@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772873576708,
+  "lastUpdate": 1772873904310,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -431,6 +431,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 62027414,
             "range": "± 404876",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "distinct": true,
+          "id": "2b3bb38ed02feeb9daf4bb6dd9eec0b3953ed988",
+          "message": "ci: chain release-binaries from release-please\n\nGITHUB_TOKEN actions don't trigger other workflows, so the v* tag\ncreated by release-please never triggered release-binaries. Fix by\nhaving release-please call release-binaries via workflow_call when\na release is created.",
+          "timestamp": "2026-03-07T09:56:36+01:00",
+          "tree_id": "bcda513dc236c123635084c3d7ac5e46d0be518c",
+          "url": "https://github.com/slnc/ifchange/commit/2b3bb38ed02feeb9daf4bb6dd9eec0b3953ed988"
+        },
+        "date": 1772873904032,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 2202626,
+            "range": "± 28845",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7397559,
+            "range": "± 57302",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 38332446,
+            "range": "± 1567639",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 70335476,
+            "range": "± 655046",
             "unit": "ns/iter"
           }
         ]
