@@ -52,7 +52,7 @@ Exit codes: **0** ok, **1** lint errors, **2** fatal error.
 
 ## Directive Syntax
 
-Directives live inside comments. Supported in [128 file extensions](#supported-languages) with comment styles: `//`, `/* */`, `#`, `<!-- -->`, `--`, `%`, `;`, `'`, `!`, and more.
+Directives live inside comments and must appear at the **start** of a comment line (after optional whitespace). Mentions of `LINT.*` in the middle of a comment are ignored. Supported in [128 file extensions](#supported-languages) with comment styles: `//`, `/* */`, `#`, `<!-- -->`, `--`, `%`, `;`, `'`, `!`, and more.
 
 **Case sensitivity:**
 - **Directive keywords** — case-insensitive. `LINT.IfChange`, `lint.ifchange`, `Lint.Ifchange`, `LINT.THENCHANGE`, `lint.LaBeL` all work.

@@ -34,7 +34,7 @@ pub(super) fn patterns() -> &'static Patterns {
         label: Regex::new(r#"(?i)LINT\.Label\(\s*['\"]([^'\"]+)['\"]\s*\)"#).unwrap(),
         label_unquoted: Regex::new(r#"(?i)LINT\.Label\(\s*([^'\")\s][^)]*?)\s*\)"#).unwrap(),
         end_label: Regex::new(r"(?i)LINT\.EndLabel\b").unwrap(),
-        lint_dot: Regex::new(r"(?i)LINT\.").unwrap(),
+        lint_dot: Regex::new(r"(?i)^\s*LINT\.").unwrap(),
         lint_directive_name: Regex::new(r"(?i)LINT\.(\w+)").unwrap(),
     })
 }

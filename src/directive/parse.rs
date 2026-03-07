@@ -123,9 +123,9 @@ pub fn parse_directives_from_content(
             }
 
             // ThenChange
-            if contains_ci(line_text, "LINT.ThenChange") {
+            if starts_with_ci(line_text.trim(), "LINT.ThenChange") {
                 let trimmed = line_text.trim();
-                if contains_ci(trimmed, "LINT.ThenChange")
+                if starts_with_ci(trimmed, "LINT.ThenChange")
                     && trimmed.contains('(')
                     && !trimmed.contains(')')
                 {
@@ -261,7 +261,7 @@ pub fn parse_directives_from_content(
             }
 
             // Label
-            if contains_ci(line_text, "LINT.Label") {
+            if starts_with_ci(line_text.trim(), "LINT.Label") {
                 if let Some(caps) = pats.label.captures(line_text) {
                     let name = caps.get(1).unwrap().as_str().to_string();
                     directives.push(Directive::Label {
@@ -810,6 +810,34 @@ mod bug_tests {
         assert!(directives
             .iter()
             .any(|d| matches!(d, Directive::IfChange { label: Some(l), .. } if l == "my_feature")));
+    }
+
+    #[test]
+    fn directive_mid_comment_ignored() {
+        // Directives that don't start the comment line should be ignored
+        for input in [
+            "// some text LINT.IfChange\n",
+            "// mentioning LINT.ThenChange(\"foo\")\n",
+            "// about LINT.Label(\"x\")\n",
+        ] {
+            let directives = parse_directives_from_content(input, "x.ts").unwrap();
+            assert!(
+                directives.is_empty(),
+                "expected empty for: {input}, got: {directives:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn directive_with_leading_whitespace() {
+        // Leading whitespace before LINT. should still parse
+        let content = "/*\n  LINT.IfChange\n  LINT.ThenChange(\"b.ts\")\n*/\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(directives.len(), 2);
+        assert!(matches!(
+            &directives[0],
+            Directive::IfChange { label: None, .. }
+        ));
     }
 
     #[test]
