@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772873904310,
+  "lastUpdate": 1772874188242,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -479,6 +479,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 70335476,
             "range": "± 655046",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "distinct": true,
+          "id": "4a17adb7ac03418ed74debb10d76f0f6db3f9657",
+          "message": "fix: configure git identity for tag operations in release workflow",
+          "timestamp": "2026-03-07T10:01:22+01:00",
+          "tree_id": "a751c795b5430570a68ab6291f764e2c6f2cbb94",
+          "url": "https://github.com/slnc/ifchange/commit/4a17adb7ac03418ed74debb10d76f0f6db3f9657"
+        },
+        "date": 1772874187837,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 2111485,
+            "range": "± 20940",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7067859,
+            "range": "± 39546",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 36750686,
+            "range": "± 1278693",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 58986375,
+            "range": "± 406853",
             "unit": "ns/iter"
           }
         ]
