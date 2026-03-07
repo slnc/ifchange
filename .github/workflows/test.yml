@@ -1,4 +1,4 @@
-name: Test
+name: CI
 
 on:
   push:
@@ -11,12 +11,8 @@ concurrency:
 
 jobs:
   check:
-    name: ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+    name: Check
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
@@ -27,14 +23,94 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Format
-        if: matrix.os == 'ubuntu-latest'
-        run: cargo fmt --check
+        run: cargo fmt --all -- --check
 
       - name: Clippy
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --quiet --all-targets --all-features -- -D warnings
+
+      - name: Install nightly toolchain for udeps
+        run: |
+          rustup toolchain install nightly --profile minimal
+          rustup component add rust-src rustc-dev llvm-tools-preview --toolchain nightly
+
+      - name: Install cargo-machete
+        uses: taiki-e/install-action@cargo-machete
+
+      - name: Install cargo-udeps
+        uses: taiki-e/install-action@cargo-udeps
+
+      - name: Machete
+        run: cargo machete
+
+      - name: Udeps
+        run: cargo +nightly udeps --all-targets --all-features
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
 
       - name: Test
         run: cargo test
+
+  ifchange:
+    name: IfChange
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build ifchange
+        run: cargo install --path .
+
+      - uses: ./
+
+  commitlint:
+    name: Commitlint
+    if: ${{ github.event_name == 'pull_request' && contains(fromJSON('["opened","edited","synchronize","reopened"]'), github.event.action) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: '22'
+
+      - name: Validate PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: echo "$PR_TITLE" | npx --yes --package @commitlint/cli --package @commitlint/config-conventional -- commitlint --config commitlint.config.mjs
+
+  sonarqube:
+    name: SonarQube
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && contains(fromJSON('["opened","synchronize","reopened"]'), github.event.action)) }}
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   benchmark:
     name: Performance
