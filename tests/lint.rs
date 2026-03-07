@@ -174,7 +174,7 @@ fn no_change_outside_block() {
     );
     assert_eq!(
         code, 0,
-        "changes outside block should not trigger, stderr: {}",
+        "changes outside section should not trigger, stderr: {}",
         stderr
     );
 }
@@ -248,7 +248,7 @@ fn malformed_target_file_reports_not_found() {
         &[],
     );
     assert_eq!(code, 1);
-    assert!(stderr.contains("not found"), "stderr: {}", stderr);
+    assert!(stderr.contains("no matching changes in diff"), "stderr: {}", stderr);
 }
 
 #[test]
@@ -259,7 +259,7 @@ fn missing_target_file_reports_not_found() {
         &[],
     );
     assert_eq!(code, 1);
-    assert!(stderr.contains("not found"), "stderr: {}", stderr);
+    assert!(stderr.contains("no matching changes in diff"), "stderr: {}", stderr);
 }
 
 #[test]

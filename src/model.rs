@@ -16,7 +16,7 @@ pub struct FileChanges {
     pub removed_lines: HashSet<usize>,
 }
 
-/// Inclusive range of line numbers in a target file label region.
+/// Inclusive range of line numbers in a target file's labeled section.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LineRange {
     pub start_line: usize,

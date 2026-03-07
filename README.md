@@ -10,25 +10,28 @@
 [![Sigstore](https://img.shields.io/badge/sigstore-signed-blue?logo=sigstore)](https://www.sigstore.dev/)
 [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
 
-**Keep related files in sync. Automatically catch forgotten correlated changes in pull requests.**
+**Lint for cross-file dependencies.** Rename an env var in your deploy config, forget the code that reads it? `ifchange` catches it in the diff.
 
-Ever renamed a field in `schema.sql` but forgot to update the ORM model? Changed a constant in one file while its copy in another went stale? These cross-file dependencies are invisible to compilers and easy to miss in code review. `ifchange` is a file dependency linter that enforces co-changes across files so that related code never drifts out of sync.
+How it works:
+* Mark related code sections with `LINT.IfChange` / `LINT.ThenChange` comments.
+* When a guarded section changes in a PR or commit, every referenced file must change too, or the build fails.
 
-Add lightweight comment directives to mark related sections. When a guarded block changes in a PR, the linter verifies that all referenced files were also modified, catching config drift, forgotten updates, and out-of-sync files before they reach production.
+128 file extensions, 50+ languages.
 
-Based on Google's internal LINT.IfChange/ThenChange system. Supports **128 file extensions** across 50+ languages — works with any file type that has comments. Inspired by [ebrevdo/ifttt-lint](https://github.com/ebrevdo/ifttt-lint).
+Implements Google's LINT.IfChange/ThenChange pattern. Inspired by [ebrevdo/ifttt-lint](https://github.com/ebrevdo/ifttt-lint).
 
 **[Install](#install) · [Usage](#usage) · [Directive Syntax](#directive-syntax) · [CI / Automation](#ci--automation) · [Performance](#performance) · [Supported Languages](#supported-languages)**
 
 ## Install
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/slnc/ifchange/main/install.sh | sh
 cargo install ifchange        # Rust / crates.io
 npm install -g ifchange       # Node.js / npm
 pip install ifchange          # Python / PyPI
 ```
 
-Pre-built binaries for Linux, macOS, and Windows are available on [GitHub Releases](https://github.com/slnc/ifchange/releases).
+Pre-built binaries for Linux, macOS, and Windows available on [GitHub Releases](https://github.com/slnc/ifchange/releases).
 
 Build from source:
 
@@ -38,36 +41,47 @@ cargo install --path .
 
 ## Usage
 
-Pipe a diff from your version control system or pass a diff file directly. By default, both directive syntax checking and diff-based linting run in a single invocation.
+**1. Fence related sections with directives:**
+
+```yaml
+# deploy/app.yml
+# LINT.IfChange
+env:
+  DATABASE_URL: postgres://prod:5432/myapp
+  REDIS_URL: redis://prod:6379
+# LINT.ThenChange(src/config.py#env)
+```
+
+```python
+# src/config.py
+# LINT.Label(env)
+DATABASE_URL = os.environ["DATABASE_URL"]
+REDIS_URL = os.environ["REDIS_URL"]
+# LINT.EndLabel
+```
+
+**2. Rename an env var in the YAML, forget to update `config.py`, run ifchange:**
 
 ```bash
-# Pipe a diff (checks directive syntax + lints the diff)
 git diff HEAD~1 | ifchange
 ```
 
-When errors are found, output looks like:
-
 ```
-error: schema.py#fields:5 -> api/serializer.py#fields: expected changes in block (2-8), but none found
+error: deploy/app.yml:2 -> src/config.py#env: target section has no matching changes in diff
 
 found 1 error (1 lint)
 ```
 
+You can wire this into a [pre-commit hook or CI action](#ci--automation) to run automatically.
+
+**3. More options:**
+
 ```bash
-# Or pass a file
-ifchange changes.diff
-
-# Scan only: validate directive syntax, skip diff lint
-ifchange --no-lint
-
-# Scan a specific directory
-ifchange --no-lint -s ./src
-
-# Lint only: skip directive syntax scan
-git diff HEAD~1 | ifchange --no-scan
-
-# Ignore specific files or labeled sections
-ifchange -i '**/*.sql' -i 'config.toml#db' changes.diff
+ifchange changes.diff                              # pass a file
+ifchange --no-lint                                  # scan only: validate directive syntax
+ifchange --no-lint -s ./src                         # scan a specific directory
+git diff HEAD~1 | ifchange --no-scan               # lint only: skip syntax scan
+ifchange -i '**/*.sql' -i 'config.toml#db' f.diff  # ignore files or labeled sections
 ```
 
 `--ignore` uses glob patterns (`*`, `?`, `**`) and matches both full relative paths and basenames.
@@ -87,18 +101,13 @@ Exit codes: **0** ok, **1** lint errors, **2** fatal error.
 
 ## Directive Syntax
 
-Directives live inside comments and must appear at the **start** of a comment line (after optional whitespace). Mentions of `LINT.*` in the middle of a comment are ignored. Supported in [128 file extensions](#supported-languages) with comment styles: `//`, `/* */`, `#`, `<!-- -->`, `--`, `%`, `;`, `'`, `!`, and more.
-
-**Case sensitivity:**
-- **Directive keywords** — case-insensitive. `LINT.IfChange`, `lint.ifchange`, `Lint.Ifchange`, `LINT.THENCHANGE`, `lint.LaBeL` all work.
-- **File extensions** — case-insensitive. `FOO.CSS`, `foo.css`, and `Foo.Css` are all recognized.
-- **File paths and label names** — case-sensitive, matching git and Unix filesystem semantics. `ThenChange("Foo.css")` and `ThenChange("foo.css")` are different targets.
+Directives go at the start of a comment line. Directives anywhere else are ignored. Full syntax reference: [docs/DIRECTIVES.md](docs/DIRECTIVES.md).
 
 ### LINT.IfChange / LINT.ThenChange
 
-`IfChange` marks the start of a guarded block. `ThenChange` closes it and declares which files must also change. When lines inside the block change, every target in the `ThenChange` must also be modified.
+`IfChange` opens a guarded section. `ThenChange` closes it and lists the files that must co-change.
 
-**Simplest case — whole-file target:**
+Simplest case, whole-file target:
 
 ```python
 # LINT.IfChange
@@ -109,9 +118,7 @@ FIELDS = ["id", "name", "email"]
 
 If `FIELDS` changes, `api/serializer.py` must also be modified somewhere in the diff.
 
-**With labels — targeted cross-references:**
-
-Labels let you narrow the requirement to a specific section instead of the whole file. Define a label with `LINT.Label` / `LINT.EndLabel` in the target file, then reference it with `file#label` in the `ThenChange`.
+With labels, narrow the requirement to a specific section:
 
 ```python
 # schema.py                              # api/serializer.py
@@ -120,9 +127,7 @@ FIELDS = ["id", "name", "email"]         FIELD_MAP = {"id": int, "name": str}
 # LINT.ThenChange(api/serializer.py#fields)  # LINT.EndLabel
 ```
 
-Now only the labeled region in `api/serializer.py` must change — not the entire file.
-
-**Multiple targets:**
+Multiple targets:
 
 ```yaml
 # LINT.IfChange("inputs")
@@ -134,59 +139,9 @@ inputs:
 # ])
 ```
 
-**All accepted IfChange formats:**
-
-```text
-LINT.IfChange                    # bare (unlabeled)
-LINT.IfChange("my-label")        # labeled, double quotes
-LINT.IfChange('my-label')        # labeled, single quotes
-LINT.IfChange(my-label)          # labeled, unquoted
-```
-
-**All accepted ThenChange formats:**
-
-```text
-LINT.ThenChange(other.py)                           # single target
-LINT.ThenChange("other.py#label")                   # with label reference
-LINT.ThenChange(#label)                             # self-reference (same file)
-LINT.ThenChange("a.py", "b.py")                     # comma-separated
-LINT.ThenChange(["a.ts", "config.py#db", "c.sql"])  # array syntax
-```
-
-Multi-line array (each line in its own comment):
-
-```js
-// LINT.ThenChange([
-//   "constants.ts",
-//   "config.py#db",
-//   "schema.sql",
-// ])
-```
-
-### LINT.Label / LINT.EndLabel
-
-Defines a named region in a target file. When a `ThenChange` references `file.py#section`, only the lines between `Label("section")` and `EndLabel` must change — not the entire file.
-
-```python
-# LINT.Label("section")
-value = 42
-# LINT.EndLabel
-```
-
-All accepted formats:
-
-```text
-LINT.Label("name")     # double quotes
-LINT.Label('name')     # single quotes
-LINT.Label(name)       # unquoted
-LINT.EndLabel          # closes the label region
-```
-
-Label names can contain letters, numbers, hyphens, underscores, and dots.
-
 ### Self-references
 
-Point to a label in the same file using `#label` without a filename:
+Point to a label in the same file with `#label` (no filename):
 
 ```python
 # LINT.ThenChange(#other-section)
@@ -194,15 +149,15 @@ Point to a label in the same file using `#label` without a filename:
 
 ### Cross-references
 
-When two files reference each other, only changes *within* an `IfChange` block trigger validation, not changes elsewhere in the file.
+When two files reference each other, only changes *within* an `IfChange` section trigger validation, not changes elsewhere in the file.
 
 ### Best practice
 
-When one side is the **source of truth** (live code) and the other is derived (docs, config), place the fence only on the source-of-truth side pointing at the derived side. Use **bidirectional** fencing only when both sides are live code that must stay in sync.
+Source of truth points at derived files. Bidirectional fencing only when both sides are live code.
 
 ## CI / Automation
 
-Use as a pre-commit hook, CI lint step, or GitHub Actions check to enforce cross-file consistency in every pull request. Ready-to-copy templates are in [examples/](examples/README.md).
+Run it in CI, as a pre-commit hook, or as a GitHub Action. Ready-to-copy templates: [examples/](examples/README.md).
 
 <!-- LINT.IfChange("action") -->
 ### GitHub Action
@@ -221,32 +176,14 @@ Use as a pre-commit hook, CI lint step, or GitHub Actions check to enforce cross
 
 ### Pre-commit hook
 
-Manual git hook:
-
-```bash
-cp examples/hooks/pre-commit.ifchange.sh .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
-```
-
-`pre-commit` framework support (this repo ships `.pre-commit-hooks.yaml`):
-
 ```yaml
 repos:
-  # Option A: ifchange already installed in PATH
   - repo: https://github.com/slnc/ifchange
     rev: v0.1.0
     hooks:
-      - id: ifchange
-
-  # Option B: install ifchange via this repo's PyPI wrapper (no Rust toolchain)
-  - repo: https://github.com/slnc/ifchange
-    rev: v0.1.0
-    hooks:
-      - id: ifchange-pypi
+      - id: ifchange        # requires ifchange in PATH
+      - id: ifchange-pypi   # OR: auto-downloads binary via PyPI
 ```
-
-`ifchange-pypi` downloads the platform binary from GitHub Releases and verifies checksums automatically.
-Use `ifchange` for the fastest runtime path; use `ifchange-pypi` for easiest setup when you don't want to preinstall the binary.
 
 ## Performance
 
@@ -259,23 +196,7 @@ Use `ifchange` for the fastest runtime path; use `ifchange-pypi` for easiest set
 
 ## Versioning
 
-`ifchange` follows [semver](https://semver.org/). The **stable API surface** (breaking change = major bump post-1.0):
-
-- CLI flags and their documented behavior
-- Exit codes: `0` ok, `1` lint errors, `2` fatal error
-- Error output format: `error: <file>:<line>: <message>` prefix and location
-- Summary line format: `found N error(s) (...)`
-- Directive syntax: `IfChange`, `ThenChange`, `Label`, `EndLabel`
-
-**Not stable** (may change in minor or patch releases):
-
-- Exact error message wording after the location prefix
-- Debug/verbose output format and content
-- Color codes and terminal formatting
-- Help text wording
-- New lint rules or error types (adding rules is not a breaking change)
-
-During `0.x`, minor versions may include breaking changes.
+Follows [semver](https://semver.org/). Stability guarantees: [docs/VERSIONING.md](docs/VERSIONING.md). During `0.x`, minor versions may include breaking changes.
 
 ## Supported Languages
 
@@ -325,13 +246,13 @@ CI runs `git diff ... | ifchange` on every PR.
 
 ### Rules for AI agents
 
-- When you change code inside a `LINT.IfChange` / `LINT.ThenChange` block, you MUST also change every file (and label) listed in the `ThenChange`.
+- When you change code inside a `LINT.IfChange` / `LINT.ThenChange` section, you MUST also change every file (and label) listed in the `ThenChange`.
 - When you add a new cross-file dependency, fence BOTH sides:
   - Source file: wrap the guarded lines with `LINT.IfChange` … `LINT.ThenChange(other-file.ext)`.
   - Target file: if only a specific section matters, mark it with `LINT.Label(name)` … `LINT.EndLabel` and reference it as `ThenChange(other-file.ext#name)`.
 - Use the comment style native to the file's language (`//`, `#`, `<!-- -->`, `--`, etc.).
 - Directive keywords are case-insensitive (`LINT.IfChange`, `lint.ifchange`, etc. all work). File paths and label names are case-sensitive.
-- Prefer labeled blocks (`LINT.IfChange(feature)`) over bare ones when more than one fence exists in a file.
+- Prefer labeled sections (`LINT.IfChange(feature)`) over bare ones when more than one fence exists in a file.
 - For multiple targets use comma-separated or array syntax:
   `LINT.ThenChange(a.py, b.py)` or `LINT.ThenChange([a.py, b.py])`.
 - Self-references use `#label` with no filename: `LINT.ThenChange(#other-section)`.
@@ -341,4 +262,4 @@ CI runs `git diff ... | ifchange` on every PR.
 
 </details>
 
-## [Architecture](docs/ARCHITECTURE.md) · [Contributing](docs/CONTRIBUTING.md) · [License (MIT)](LICENSE)
+## [Architecture](docs/ARCHITECTURE.md) · [Contributing](docs/CONTRIBUTING.md) · [Versioning](docs/VERSIONING.md) · [License (MIT)](LICENSE)

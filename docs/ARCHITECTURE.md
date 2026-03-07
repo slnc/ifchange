@@ -50,9 +50,9 @@ file ──▶ read ──▶ extract comments ──▶ match directives ──
 For each target file not already parsed in Phase 1: read → extract directives → build label→line-range index. A directive cache avoids re-parsing files seen in Phase 1.
 
 **Phase 3: Validate pairs** (sequential)
-For each IfChange→ThenChange pair, check whether the target file (or labeled region) was also modified in the diff.
+For each IfChange→ThenChange pair, check whether the target file (or labeled section) was also modified in the diff.
 
-The key subtlety is cross-reference detection: when two files reference each other via `IfChange` blocks, only changes within an `IfChange` region trigger validation. Without this, mutual references would always fire. A change to file `A` triggers a check on file `B`, whose own `IfChange` pointing back at A would trigger again. The cross-reference logic breaks this cycle by narrowing the trigger condition.
+The key subtlety is cross-reference detection: when two files reference each other via `IfChange` sections, only changes within an `IfChange` section trigger validation. Without this, mutual references would always fire. A change to file `A` triggers a check on file `B`, whose own `IfChange` pointing back at A would trigger again. The cross-reference logic breaks this cycle by narrowing the trigger condition.
 
 ## Scan Mode
 

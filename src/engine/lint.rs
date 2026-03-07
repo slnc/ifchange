@@ -171,9 +171,10 @@ pub fn lint_diff(
                         }
                     }
                     let if_ctx = format_if_context(&p.file, p.if_label.as_deref(), p.if_line);
+                    let kind = if p.then_target_label.is_some() { "section" } else { "file" };
                     messages.push(format!(
-                        "error: {} -> {}: target file not found",
-                        if_ctx, p.then_target
+                        "error: {} -> {}: target {} has no matching changes in diff",
+                        if_ctx, p.then_target, kind
                     ));
                     error_count += 1;
                 }
@@ -263,7 +264,7 @@ pub fn lint_diff(
                         .any(|&line| line >= lr.start_line && line <= lr.end_line);
                     if !in_range {
                         messages.push(format!(
-                            "error: {} -> {}: expected changes in block ({}-{}), but none found",
+                            "error: {} -> {}: expected changes in section ({}-{}), but none found",
                             if_ctx, p.then_target, lr.start_line, lr.end_line,
                         ));
                         error_count += 1;
