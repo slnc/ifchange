@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772900090923,
+  "lastUpdate": 1772900827269,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -1103,6 +1103,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 60805000,
             "range": "± 547079",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "juan@juanalonso.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "distinct": true,
+          "id": "c608220374c892889835a7e7098d905c08b7ff06",
+          "message": "chore: update docs and tweak verbose output\n\n## What\n- Update performance table with latest bench numbers (~17ms lint, ~33ms scan)\n- Rename CI workflow test.yml → ci.yml\n- Add blank line before verbose summary headers\n- Fix ARCHITECTURE.md extension count, CONTRIBUTING.md bench command\n\n## Verify / Risk\n- [ ] `just test` passes\n- Cosmetic changes only, no logic risk",
+          "timestamp": "2026-03-07T17:22:56+01:00",
+          "tree_id": "5d056b3d02d187282d403ea53a6a976fae67ee86",
+          "url": "https://github.com/slnc/ifchange/commit/c608220374c892889835a7e7098d905c08b7ff06"
+        },
+        "date": 1772900826371,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 3478425,
+            "range": "± 61408",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7475250,
+            "range": "± 318653",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 40361023,
+            "range": "± 1593706",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 59516235,
+            "range": "± 647762",
             "unit": "ns/iter"
           }
         ]
