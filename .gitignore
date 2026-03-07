@@ -1,4 +1,4 @@
 /target
 /npm/bin/
-/pypi/lint_ifchange/bin/
+/pypi/ifchange/bin/
 /pypi/dist/

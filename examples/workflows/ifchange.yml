@@ -1,70 +1,16 @@
-name: ifchange
+name: IfChange
 
 on:
   pull_request:
   push:
-    branches:
-      - main
-
-env:
-  IFCHANGE_RELEASE_REPOSITORY: YOUR_ORG/ifchange
-  IFCHANGE_VERSION: v1.2.3
+    branches: [main]
 
 jobs:
   ifchange:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Install cosign
-        uses: sigstore/cosign-installer@v3.8.1
-
-      - name: Install ifchange (prebuilt + verified)
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          TARGET="x86_64-unknown-linux-gnu"
-          ARCHIVE="ifchange-${IFCHANGE_VERSION}-${TARGET}.tar.gz"
-          EXPECTED_IDENTITY="https://github.com/${IFCHANGE_RELEASE_REPOSITORY}/.github/workflows/release-binaries.yml@refs/tags/${IFCHANGE_VERSION}"
-
-          gh release download "$IFCHANGE_VERSION" --repo "$IFCHANGE_RELEASE_REPOSITORY" --pattern "$ARCHIVE"
-          gh release download "$IFCHANGE_VERSION" --repo "$IFCHANGE_RELEASE_REPOSITORY" --pattern "SHA256SUMS"
-          gh release download "$IFCHANGE_VERSION" --repo "$IFCHANGE_RELEASE_REPOSITORY" --pattern "SHA256SUMS.sig"
-          gh release download "$IFCHANGE_VERSION" --repo "$IFCHANGE_RELEASE_REPOSITORY" --pattern "SHA256SUMS.pem"
-
-          cosign verify-blob SHA256SUMS \
-            --signature SHA256SUMS.sig \
-            --certificate SHA256SUMS.pem \
-            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            --certificate-identity "$EXPECTED_IDENTITY"
-
-          grep "  $ARCHIVE$" SHA256SUMS > SHA256SUMS.filtered
-          sha256sum -c SHA256SUMS.filtered
-
-          tar -xzf "$ARCHIVE"
-          chmod +x ifchange
-          mkdir -p "$HOME/.local/bin"
-          mv ifchange "$HOME/.local/bin/ifchange"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
-      - name: Build diff
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            git fetch origin "${{ github.base_ref }}" --depth=1
-            git diff --merge-base "origin/${{ github.base_ref }}" HEAD > changes.diff
-          else
-            git diff "${{ github.event.before }}" "${{ github.sha }}" > changes.diff
-          fi
-
-      - name: Run ifchange
-        run: ifchange changes.diff
+      - uses: slnc/ifchange@v1

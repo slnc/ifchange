@@ -50,6 +50,14 @@ ifchange -i '*.json' -i 'config.toml#db' changes.diff
 
 Exit codes: **0** ok, **1** lint errors, **2** fatal error.
 
+When errors are found, output looks like:
+
+```
+error: schema.py#fields:5 -> api/serializer.py#fields: expected changes in block (2-8), but none found
+
+found 1 error (1 lint)
+```
+
 ## Directive Syntax
 
 Directives live inside comments and must appear at the **start** of a comment line (after optional whitespace). Mentions of `LINT.*` in the middle of a comment are ignored. Supported in [128 file extensions](#supported-languages) with comment styles: `//`, `/* */`, `#`, `<!-- -->`, `--`, `%`, `;`, `'`, `!`, and more.

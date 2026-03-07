@@ -21,13 +21,11 @@ See [`workflows/ifchange.yml`](workflows/ifchange.yml) for a complete workflow f
 | `token` | GitHub token for downloading release assets | `github.token` |
 <!-- LINT.ThenChange("../action.yml#inputs") -->
 
-## Other options
+## Pre-commit hook
 
-- `hooks/pre-commit.ifchange.sh`: local Git pre-commit hook that lints staged changes.
-- `workflows/ifchange-use-reusable.yml`: caller workflow that imports the reusable workflow (prebuilt + verified binary install).
-- `workflows/ifchange.yml`: standalone GitHub Actions workflow using prebuilt + verified binary install.
+Copy the local Git hook to lint staged changes before each commit:
 
-These files are templates. Copy them into your repository and adjust details as needed.
+- `hooks/pre-commit.ifchange.sh`
 
 ## What runs by default
 

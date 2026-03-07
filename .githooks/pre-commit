@@ -3,8 +3,8 @@ set -eu
 
 make check_fix
 
-if command -v lint-ifchange >/dev/null 2>&1; then
-  git diff --cached --no-ext-diff --relative | lint-ifchange
+if command -v ifchange >/dev/null 2>&1; then
+  git diff --cached --no-ext-diff --relative | ifchange
 else
   git diff --cached --no-ext-diff --relative | cargo run --quiet --release --
 fi
