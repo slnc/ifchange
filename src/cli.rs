@@ -267,7 +267,11 @@ fn run_scan(dir: &str, verbose: bool, debug: bool) -> (i32, usize) {
             Err(_) => return,
         };
 
-        if !content.as_bytes().windows(5).any(|w| w.eq_ignore_ascii_case(b"LINT.")) {
+        if !content
+            .as_bytes()
+            .windows(5)
+            .any(|w| w.eq_ignore_ascii_case(b"LINT."))
+        {
             return;
         }
 

@@ -3,12 +3,14 @@
 ## Setup
 
 ```bash
-make setup
+just setup
 ```
+
+Requires [`just`](https://github.com/casey/just) (`cargo install just`).
 
 ## Testing
 
 ```bash
-cargo test          # 28 unit + 19 integration
+just test           # 28 unit + 19 integration
 cargo bench         # criterion benchmarks
 ```
