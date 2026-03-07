@@ -168,19 +168,63 @@ fn extract_html_style(content: &str) -> Vec<Comment> {
     comments
 }
 
-/// Extract `//` line comments and `/* … */` block comments.
+struct CommentSyntax {
+    line_comment: bool,
+    /// Opening char before `*`: `'/'` for `/* */`, `'('` for `(* *)`, `None` for no blocks.
+    block_open: Option<char>,
+    backtick_strings: bool,
+}
+
+const C_STYLE: CommentSyntax = CommentSyntax {
+    line_comment: true,
+    block_open: Some('/'),
+    backtick_strings: true,
+};
+
+const C_LINE: CommentSyntax = CommentSyntax {
+    line_comment: true,
+    block_open: None,
+    backtick_strings: true,
+};
+
+const C_BLOCK: CommentSyntax = CommentSyntax {
+    line_comment: false,
+    block_open: Some('/'),
+    backtick_strings: true,
+};
+
+const SLASH_PAREN: CommentSyntax = CommentSyntax {
+    line_comment: true,
+    block_open: Some('('),
+    backtick_strings: false,
+};
+
 fn extract_c_style(content: &str) -> Vec<Comment> {
+    extract_with_syntax(content, &C_STYLE)
+}
+
+fn extract_c_line_only(content: &str) -> Vec<Comment> {
+    extract_with_syntax(content, &C_LINE)
+}
+
+fn extract_c_block_only(content: &str) -> Vec<Comment> {
+    extract_with_syntax(content, &C_BLOCK)
+}
+
+fn extract_slash_paren_block(content: &str) -> Vec<Comment> {
+    extract_with_syntax(content, &SLASH_PAREN)
+}
+
+fn extract_with_syntax(content: &str, syntax: &CommentSyntax) -> Vec<Comment> {
     let mut comments = Vec::new();
     let mut chars = content.char_indices().peekable();
     let mut line: usize = 1;
     let mut in_string: Option<char> = None;
 
     while let Some(&(_i, ch)) = chars.peek() {
-        // Track strings so we don't pick up comment-like sequences inside them.
         if let Some(quote) = in_string {
             chars.next();
             if ch == '\\' {
-                // Skip escaped character.
                 if chars.peek().is_some() {
                     let next = chars.next().unwrap().1;
                     if next == '\n' {
@@ -196,75 +240,49 @@ fn extract_c_style(content: &str) -> Vec<Comment> {
         }
 
         match ch {
-            '"' | '\'' | '`' => {
+            '"' | '\'' => {
                 in_string = Some(ch);
                 chars.next();
             }
-            '/' => {
+            '`' if syntax.backtick_strings => {
+                in_string = Some(ch);
+                chars.next();
+            }
+            '/' if syntax.line_comment || syntax.block_open == Some('/') => {
                 chars.next();
                 match chars.peek().map(|&(_, c)| c) {
-                    Some('/') => {
-                        // Line comment.
-                        chars.next(); // consume second '/'
-                        let start = match chars.peek() {
-                            Some(&(idx, _)) => idx,
-                            None => content.len(),
-                        };
-                        let comment_line = line;
-                        // Advance to end of line.
-                        while let Some(&(_, c)) = chars.peek() {
-                            if c == '\n' {
-                                break;
-                            }
-                            chars.next();
-                        }
-                        let end = match chars.peek() {
-                            Some(&(idx, _)) => idx,
-                            None => content.len(),
-                        };
+                    Some('/') if syntax.line_comment => {
+                        chars.next();
+                        let (comment_line, text) = read_line_comment(content, &mut chars, line);
                         comments.push(Comment {
                             start_line: comment_line,
-                            text: content[start..end].to_string(),
+                            text,
                         });
                     }
-                    Some('*') => {
-                        // Block comment.
-                        chars.next(); // consume '*'
-                        let start = match chars.peek() {
-                            Some(&(idx, _)) => idx,
-                            None => content.len(),
-                        };
-                        let comment_line = line;
-                        let mut end = content.len();
-                        let mut found_end = false;
-                        while let Some(&(_, c)) = chars.peek() {
-                            if c == '\n' {
-                                line += 1;
-                                chars.next();
-                            } else if c == '*' {
-                                let star_pos = chars.peek().map(|&(idx, _)| idx).unwrap();
-                                chars.next();
-                                if let Some(&(_, '/')) = chars.peek() {
-                                    end = star_pos;
-                                    chars.next(); // consume '/'
-                                    found_end = true;
-                                    break;
-                                }
-                            } else {
-                                chars.next();
-                            }
-                        }
-                        if !found_end {
-                            end = content.len();
-                        }
-                        let raw = &content[start..end];
-                        let text = clean_block_comment(raw);
+                    Some('*') if syntax.block_open == Some('/') => {
+                        chars.next();
+                        let (comment_line, text, new_line) =
+                            read_block_comment(content, &mut chars, line, '/', true);
+                        line = new_line;
                         comments.push(Comment {
                             start_line: comment_line,
                             text,
                         });
                     }
                     _ => {}
+                }
+            }
+            '(' if syntax.block_open == Some('(') => {
+                chars.next();
+                if let Some('*') = chars.peek().map(|&(_, c)| c) {
+                    chars.next();
+                    let (comment_line, text, new_line) =
+                        read_block_comment(content, &mut chars, line, ')', false);
+                    line = new_line;
+                    comments.push(Comment {
+                        start_line: comment_line,
+                        text,
+                    });
                 }
             }
             '\n' => {
@@ -278,6 +296,73 @@ fn extract_c_style(content: &str) -> Vec<Comment> {
     }
 
     comments
+}
+
+fn read_line_comment(
+    content: &str,
+    chars: &mut std::iter::Peekable<std::str::CharIndices>,
+    line: usize,
+) -> (usize, String) {
+    let start = match chars.peek() {
+        Some(&(idx, _)) => idx,
+        None => content.len(),
+    };
+    while let Some(&(_, c)) = chars.peek() {
+        if c == '\n' {
+            break;
+        }
+        chars.next();
+    }
+    let end = match chars.peek() {
+        Some(&(idx, _)) => idx,
+        None => content.len(),
+    };
+    (line, content[start..end].to_string())
+}
+
+fn read_block_comment(
+    content: &str,
+    chars: &mut std::iter::Peekable<std::str::CharIndices>,
+    mut line: usize,
+    close_char: char,
+    use_clean: bool,
+) -> (usize, String, usize) {
+    let start = match chars.peek() {
+        Some(&(idx, _)) => idx,
+        None => content.len(),
+    };
+    let comment_line = line;
+    let mut end = content.len();
+    let mut found_end = false;
+    while let Some(&(_, c)) = chars.peek() {
+        if c == '\n' {
+            line += 1;
+            chars.next();
+        } else if c == '*' {
+            let star_pos = chars.peek().map(|&(idx, _)| idx).unwrap();
+            chars.next();
+            if let Some(&(_, ch)) = chars.peek() {
+                if ch == close_char {
+                    end = star_pos;
+                    chars.next();
+                    found_end = true;
+                    break;
+                }
+            }
+        } else {
+            chars.next();
+        }
+    }
+    if !found_end {
+        end = content.len();
+    }
+    let raw = &content[start..end];
+    let text = if use_clean {
+        clean_block_comment(raw)
+    } else {
+        raw.to_string()
+    };
+    (comment_line, text, line)
 }
 
 /// Clean a block comment body: strip leading `*` on each line (JSDoc-style).
@@ -375,261 +460,6 @@ fn extract_prefixed_line_comments(content: &str, prefix: &str) -> Vec<Comment> {
             });
         }
     }
-    comments
-}
-
-/// Extract only `//` line comments (no block comment support).
-fn extract_c_line_only(content: &str) -> Vec<Comment> {
-    let mut comments = Vec::new();
-    let mut chars = content.char_indices().peekable();
-    let mut line: usize = 1;
-    let mut in_string: Option<char> = None;
-
-    while let Some(&(_i, ch)) = chars.peek() {
-        if let Some(quote) = in_string {
-            chars.next();
-            if ch == '\\' {
-                if chars.peek().is_some() {
-                    let next = chars.next().unwrap().1;
-                    if next == '\n' {
-                        line += 1;
-                    }
-                }
-            } else if ch == quote {
-                in_string = None;
-            } else if ch == '\n' {
-                line += 1;
-            }
-            continue;
-        }
-
-        match ch {
-            '"' | '\'' | '`' => {
-                in_string = Some(ch);
-                chars.next();
-            }
-            '/' => {
-                chars.next();
-                if let Some('/') = chars.peek().map(|&(_, c)| c) {
-                    chars.next(); // consume second '/'
-                    let start = match chars.peek() {
-                        Some(&(idx, _)) => idx,
-                        None => content.len(),
-                    };
-                    let comment_line = line;
-                    while let Some(&(_, c)) = chars.peek() {
-                        if c == '\n' {
-                            break;
-                        }
-                        chars.next();
-                    }
-                    let end = match chars.peek() {
-                        Some(&(idx, _)) => idx,
-                        None => content.len(),
-                    };
-                    comments.push(Comment {
-                        start_line: comment_line,
-                        text: content[start..end].to_string(),
-                    });
-                }
-            }
-            '\n' => {
-                line += 1;
-                chars.next();
-            }
-            _ => {
-                chars.next();
-            }
-        }
-    }
-
-    comments
-}
-
-/// Extract `//` line comments and `(* ... *)` block comments (F#-style).
-fn extract_slash_paren_block(content: &str) -> Vec<Comment> {
-    let mut comments = Vec::new();
-    let mut chars = content.char_indices().peekable();
-    let mut line: usize = 1;
-    let mut in_string: Option<char> = None;
-
-    while let Some(&(_i, ch)) = chars.peek() {
-        if let Some(quote) = in_string {
-            chars.next();
-            if ch == '\\' {
-                if chars.peek().is_some() {
-                    let next = chars.next().unwrap().1;
-                    if next == '\n' {
-                        line += 1;
-                    }
-                }
-            } else if ch == quote {
-                in_string = None;
-            } else if ch == '\n' {
-                line += 1;
-            }
-            continue;
-        }
-
-        match ch {
-            '"' | '\'' => {
-                in_string = Some(ch);
-                chars.next();
-            }
-            '/' => {
-                chars.next();
-                if let Some('/') = chars.peek().map(|&(_, c)| c) {
-                    // Line comment.
-                    chars.next();
-                    let start = match chars.peek() {
-                        Some(&(idx, _)) => idx,
-                        None => content.len(),
-                    };
-                    let comment_line = line;
-                    while let Some(&(_, c)) = chars.peek() {
-                        if c == '\n' {
-                            break;
-                        }
-                        chars.next();
-                    }
-                    let end = match chars.peek() {
-                        Some(&(idx, _)) => idx,
-                        None => content.len(),
-                    };
-                    comments.push(Comment {
-                        start_line: comment_line,
-                        text: content[start..end].to_string(),
-                    });
-                }
-            }
-            '(' => {
-                chars.next();
-                if let Some('*') = chars.peek().map(|&(_, c)| c) {
-                    // Block comment (* ... *)
-                    chars.next(); // consume '*'
-                    let start = match chars.peek() {
-                        Some(&(idx, _)) => idx,
-                        None => content.len(),
-                    };
-                    let comment_line = line;
-                    let mut end = content.len();
-                    let mut found_end = false;
-                    while let Some(&(_, c)) = chars.peek() {
-                        if c == '\n' {
-                            line += 1;
-                            chars.next();
-                        } else if c == '*' {
-                            let star_pos = chars.peek().map(|&(idx, _)| idx).unwrap();
-                            chars.next();
-                            if let Some(&(_, ')')) = chars.peek() {
-                                end = star_pos;
-                                chars.next(); // consume ')'
-                                found_end = true;
-                                break;
-                            }
-                        } else {
-                            chars.next();
-                        }
-                    }
-                    if !found_end {
-                        end = content.len();
-                    }
-                    comments.push(Comment {
-                        start_line: comment_line,
-                        text: content[start..end].to_string(),
-                    });
-                }
-            }
-            '\n' => {
-                line += 1;
-                chars.next();
-            }
-            _ => {
-                chars.next();
-            }
-        }
-    }
-
-    comments
-}
-
-/// Extract only C-style `/* ... */` block comments (no `//` handling).
-fn extract_c_block_only(content: &str) -> Vec<Comment> {
-    let mut comments = Vec::new();
-    let mut chars = content.char_indices().peekable();
-    let mut line: usize = 1;
-    let mut in_string: Option<char> = None;
-
-    while let Some(&(_i, ch)) = chars.peek() {
-        if let Some(quote) = in_string {
-            chars.next();
-            if ch == '\\' {
-                if chars.peek().is_some() {
-                    let next = chars.next().unwrap().1;
-                    if next == '\n' {
-                        line += 1;
-                    }
-                }
-            } else if ch == quote {
-                in_string = None;
-            } else if ch == '\n' {
-                line += 1;
-            }
-            continue;
-        }
-
-        match ch {
-            '"' | '\'' | '`' => {
-                in_string = Some(ch);
-                chars.next();
-            }
-            '/' => {
-                chars.next();
-                if let Some('*') = chars.peek().map(|&(_, c)| c) {
-                    chars.next();
-                    let start = match chars.peek() {
-                        Some(&(idx, _)) => idx,
-                        None => content.len(),
-                    };
-                    let comment_line = line;
-                    let mut end = content.len();
-                    let mut found_end = false;
-                    while let Some(&(_, c)) = chars.peek() {
-                        if c == '\n' {
-                            line += 1;
-                            chars.next();
-                        } else if c == '*' {
-                            let star_pos = chars.peek().map(|&(idx, _)| idx).unwrap();
-                            chars.next();
-                            if let Some(&(_, '/')) = chars.peek() {
-                                end = star_pos;
-                                chars.next();
-                                found_end = true;
-                                break;
-                            }
-                        } else {
-                            chars.next();
-                        }
-                    }
-                    if !found_end {
-                        end = content.len();
-                    }
-                    comments.push(Comment {
-                        start_line: comment_line,
-                        text: clean_block_comment(&content[start..end]),
-                    });
-                }
-            }
-            '\n' => {
-                line += 1;
-                chars.next();
-            }
-            _ => {
-                chars.next();
-            }
-        }
-    }
-
     comments
 }
 
