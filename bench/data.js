@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772884045685,
+  "lastUpdate": 1772885338051,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -815,6 +815,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 61071360,
             "range": "± 1829139",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a32ef6afab4ba4bb5ececfdc5991359d9a814d4a",
+          "message": "ci: gate expensive jobs on test matrix (#16)\n\n* fix: pin workflow dependencies to immutable SHAs\n\n* ci: gate expensive jobs on test matrix",
+          "timestamp": "2026-03-07T13:05:49+01:00",
+          "tree_id": "bc98f7197a9da187c11e7dab1441df767fb52339",
+          "url": "https://github.com/slnc/ifchange/commit/a32ef6afab4ba4bb5ececfdc5991359d9a814d4a"
+        },
+        "date": 1772885337790,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 2112414,
+            "range": "± 11736",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7105816,
+            "range": "± 309709",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 37256203,
+            "range": "± 1383410",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 60032792,
+            "range": "± 654589",
             "unit": "ns/iter"
           }
         ]
