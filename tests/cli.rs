@@ -136,8 +136,10 @@ fn verbose_shows_repo_root_dot_when_running_at_root() {
 #[test]
 fn verbose_shows_repo_root_path_when_running_in_subdir() {
     let dir = TempDir::new().unwrap();
-    // Canonicalize to resolve symlinks (e.g. /var -> /private/var on macOS)
-    let canon = dir.path().canonicalize().unwrap();
+    // Canonicalize to resolve symlinks (e.g. /var -> /private/var on macOS).
+    // On Windows, canonicalize adds a \\?\ prefix that current_dir() doesn't,
+    // so strip it to match the binary's output.
+    let canon = dunce::canonicalize(dir.path()).unwrap();
     fs::create_dir_all(canon.join(".git")).unwrap();
     fs::create_dir_all(canon.join("nested")).unwrap();
     let tmp = tempfile::NamedTempFile::new().unwrap();
