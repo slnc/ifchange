@@ -119,9 +119,7 @@ pub fn run(cli: Cli) -> i32 {
 
     // Discover repo root for resolving repo-relative paths.
     let cwd = std::env::current_dir().ok();
-    let repo_root = cwd
-        .as_ref()
-        .and_then(|c| find_repo_root(c));
+    let repo_root = cwd.as_ref().and_then(|c| find_repo_root(c));
 
     if verbose {
         if let Some(ref root) = repo_root {
