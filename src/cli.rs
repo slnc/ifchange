@@ -103,7 +103,7 @@ pub struct Cli {
     pub no_lint: bool,
 }
 
-pub fn run(mut cli: Cli) -> i32 {
+pub fn run(cli: Cli) -> i32 {
     setup_color();
 
     if cli.no_scan && cli.no_lint {
@@ -117,64 +117,30 @@ pub fn run(mut cli: Cli) -> i32 {
     let debug = cli.debug;
     let verbose = cli.verbose || debug;
 
-    // Resolve file arguments to absolute paths before changing directory.
-    // Use canonicalize for existing paths, fall back to manual join with CWD.
-    if let Some(ref path) = cli.diff_file {
-        if path != "-" {
-            let abs = std::fs::canonicalize(path).unwrap_or_else(|_| {
-                std::env::current_dir()
-                    .map(|cwd| cwd.join(path))
-                    .unwrap_or_else(|_| std::path::PathBuf::from(path))
-            });
-            cli.diff_file = Some(abs.to_string_lossy().to_string());
-        }
-    }
-    if let Some(ref dir) = cli.scan {
-        let abs = std::fs::canonicalize(dir).unwrap_or_else(|_| {
-            std::env::current_dir()
-                .map(|cwd| cwd.join(dir))
-                .unwrap_or_else(|_| std::path::PathBuf::from(dir))
-        });
-        cli.scan = Some(abs.to_string_lossy().to_string());
-    }
+    // Discover repo root for resolving repo-relative paths.
+    let cwd = std::env::current_dir().ok();
+    let repo_root = cwd
+        .as_ref()
+        .and_then(|c| find_repo_root(c));
 
-    // Change to repo root so that repo-absolute paths (leading '/') resolve correctly.
-    // Save the original CWD so we can restore it before returning.
-    let original_cwd = std::env::current_dir().ok();
-    if let Some(ref cwd) = original_cwd {
-        if let Some(root) = find_repo_root(cwd) {
-            if verbose {
-                if root == *cwd {
-                    eprintln!("{}", dim("repo root: ."));
-                } else {
-                    eprintln!("{}", dim(&format!("repo root: {}", root.display())));
-                }
-            }
-            if root != *cwd {
-                if let Err(err) = std::env::set_current_dir(&root) {
-                    eprintln!(
-                        "{} changing to repo root {}: {}",
-                        red("Error:"),
-                        root.display(),
-                        err
-                    );
-                    return 2;
-                }
+    if verbose {
+        if let Some(ref root) = repo_root {
+            if cwd.as_ref() == Some(root) {
+                eprintln!("{}", dim("repo root: ."));
+            } else {
+                eprintln!("{}", dim(&format!("repo root: {}", root.display())));
             }
         }
     }
 
-    let exit_code = run_inner(cli, verbose, debug);
+    let root = repo_root
+        .or(cwd)
+        .unwrap_or_else(|| std::path::PathBuf::from("."));
 
-    // Restore original working directory so callers are not affected.
-    if let Some(ref cwd) = original_cwd {
-        let _ = std::env::set_current_dir(cwd);
-    }
-
-    exit_code
+    run_inner(cli, verbose, debug, &root)
 }
 
-fn run_inner(cli: Cli, verbose: bool, debug: bool) -> i32 {
+fn run_inner(cli: Cli, verbose: bool, debug: bool, repo_root: &std::path::Path) -> i32 {
     if cli.jobs > 0 {
         rayon::ThreadPoolBuilder::new()
             .num_threads(cli.jobs)
@@ -246,7 +212,7 @@ fn run_inner(cli: Cli, verbose: bool, debug: bool) -> i32 {
             }
         }
 
-        let result = lint_diff(&diff_text, verbose, debug, &cli.ignore);
+        let result = lint_diff(&diff_text, verbose, debug, &cli.ignore, repo_root);
 
         lint_errors = result.messages.len();
 
