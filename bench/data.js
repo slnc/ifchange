@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773172436191,
+  "lastUpdate": 1773173155330,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -1679,6 +1679,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 59239888,
             "range": "± 653138",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "264827662+slnc-renovate-ci[bot]@users.noreply.github.com",
+            "name": "slnc-renovate-ci[bot]",
+            "username": "slnc-renovate-ci[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4db11bea7907907dc3c2ee2cf8adb4185d4d23d6",
+          "message": "deps: update all non-security dependencies (#22)\n\n* chore(deps): update all non-security dependencies\n\n* ci: set explicit rust toolchain for dtolnay action\n\n---------\n\nCo-authored-by: slnc-renovate-ci[bot] <264827662+slnc-renovate-ci[bot]@users.noreply.github.com>\nCo-authored-by: slnc <69429+slnc@users.noreply.github.com>\nCo-authored-by: slnc <juan@juanalonso.com>",
+          "timestamp": "2026-03-10T20:01:48Z",
+          "tree_id": "121970c745236f70cb1c81248bbae7fb4b1ececf",
+          "url": "https://github.com/slnc/ifchange/commit/4db11bea7907907dc3c2ee2cf8adb4185d4d23d6"
+        },
+        "date": 1773173154717,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 3324043,
+            "range": "± 14328",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7516552,
+            "range": "± 166837",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 41704265,
+            "range": "± 1730770",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 61868284,
+            "range": "± 1012174",
             "unit": "ns/iter"
           }
         ]
