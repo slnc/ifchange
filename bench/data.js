@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773173155330,
+  "lastUpdate": 1773173501998,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -1727,6 +1727,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 61868284,
             "range": "± 1012174",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "41898282+github-actions[bot]@users.noreply.github.com",
+            "name": "github-actions[bot]",
+            "username": "github-actions[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "27ba06e92e7bd0901fb799881be71b82923dbd2e",
+          "message": "chore(main): release 0.2.0 (#19)\n\nCo-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>\nCo-authored-by: slnc <69429+slnc@users.noreply.github.com>",
+          "timestamp": "2026-03-10T20:08:18Z",
+          "tree_id": "9f7e4ae3a3a2e128ead7e1047d68ed289ffbba8a",
+          "url": "https://github.com/slnc/ifchange/commit/27ba06e92e7bd0901fb799881be71b82923dbd2e"
+        },
+        "date": 1773173501573,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 3382767,
+            "range": "± 79460",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7425671,
+            "range": "± 384804",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 39054821,
+            "range": "± 1226236",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 59704244,
+            "range": "± 567444",
             "unit": "ns/iter"
           }
         ]
