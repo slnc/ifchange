@@ -201,17 +201,29 @@ pub fn lint_diff(
             None => continue,
         };
 
-        // Added lines use inclusive range (they have exact new-file positions).
-        // Removal-only lines use a tighter range (> if_line) because a removal
-        // that maps to if_line was actually before the block, not inside it.
+        // Only lines strictly between the directives count as content.
+        // The IfChange and ThenChange lines themselves are metadata — changing
+        // them (e.g. updating a target path or adding a label) should not
+        // trigger the co-change requirement.
+        //
+        // Additions on the directive lines are always metadata edits.
+        // Removals use > if_line (a removal mapping to if_line was before
+        // the block). Removals mapping to then_line are content deletions
+        // above the ThenChange — UNLESS the ThenChange is also being
+        // replaced (addition at the same line), which is a directive edit.
+        let then_line_replaced = source_changed.addition_lines.contains(&p.then_line);
         let triggered = source_changed
             .addition_lines
             .iter()
-            .any(|&line| line >= p.if_line && line <= p.then_line)
-            || source_changed
-                .removal_lines
-                .iter()
-                .any(|&line| line > p.if_line && line <= p.then_line);
+            .any(|&line| line > p.if_line && line < p.then_line)
+            || source_changed.removal_lines.iter().any(|&line| {
+                line > p.if_line
+                    && if line == p.then_line {
+                        !then_line_replaced
+                    } else {
+                        line < p.then_line
+                    }
+            });
 
         if !triggered {
             continue;
