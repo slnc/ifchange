@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773173501998,
+  "lastUpdate": 1773202426957,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -1775,6 +1775,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 59704244,
             "range": "± 567444",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c644f07580004e0032c5ca6211c210c226118c89",
+          "message": "ci: resolve release tag from dispatch payload (#24)\n\n* fix: resolve release tag from dispatch payload instead of github.ref_name\n\nrepository_dispatch events always set github.ref_name to \"main\", not the\nrelease tag. This caused publish-npm, publish-pypi, and publish-crate to\nfail because they received \"main\" as the version string.\n\nAdd a resolve-tag job that extracts the tag from client_payload.tag for\nrepository_dispatch events, with a guard against accidentally releasing\nwith \"main\" as the version.\n\n* refactor: use RELEASE_TAG env var consistently in publish jobs\n\nUse env block pattern for publish-npm and publish-pypi jobs, consistent\nwith build and update-action-tag jobs.\n\n* fix: prevent script injection in resolve-tag step\n\nPass github.event.client_payload.tag through env var instead of direct\n${{ }} interpolation to prevent shell injection from untrusted dispatch\npayloads.",
+          "timestamp": "2026-03-11T05:10:13+01:00",
+          "tree_id": "9b736d222a975051bb3cd653ba23beb9b48e6f37",
+          "url": "https://github.com/slnc/ifchange/commit/c644f07580004e0032c5ca6211c210c226118c89"
+        },
+        "date": 1773202426070,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 3250495,
+            "range": "± 16005",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 6420788,
+            "range": "± 248457",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 36297261,
+            "range": "± 1075785",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 38099304,
+            "range": "± 263823",
             "unit": "ns/iter"
           }
         ]
