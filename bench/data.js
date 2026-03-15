@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773569217827,
+  "lastUpdate": 1773571193821,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -1871,6 +1871,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 61865307,
             "range": "± 1755192",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "41898282+github-actions[bot]@users.noreply.github.com",
+            "name": "github-actions[bot]",
+            "username": "github-actions[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "648f920060f1cdafa87d6859d4f62468b51d8b29",
+          "message": "chore(main): release 0.2.1 (#26)\n\n:robot: I have created a release *beep* *boop*\n---\n\n\n## [0.2.1](https://github.com/slnc/ifchange/compare/v0.2.0...v0.2.1)\n(2026-03-15)\n\n\n### Bug Fixes\n\n* exclude directive lines from co-change trigger range\n([#25](https://github.com/slnc/ifchange/issues/25))\n([b6b314b](https://github.com/slnc/ifchange/commit/b6b314bbe5e243a28b743dd67b2db30a1bfdb1fb))\n\n---\nThis PR was generated with [Release\nPlease](https://github.com/googleapis/release-please). See\n[documentation](https://github.com/googleapis/release-please#release-please).\n\nCo-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+          "timestamp": "2026-03-15T10:36:37Z",
+          "tree_id": "85124d5513003fe8a1a2dbe0f61336dd26605bbd",
+          "url": "https://github.com/slnc/ifchange/commit/648f920060f1cdafa87d6859d4f62468b51d8b29"
+        },
+        "date": 1773571193014,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4360794,
+            "range": "± 54620",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7539674,
+            "range": "± 357003",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 40724566,
+            "range": "± 1586265",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 61216269,
+            "range": "± 302888",
             "unit": "ns/iter"
           }
         ]
