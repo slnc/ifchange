@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773202426957,
+  "lastUpdate": 1773569217827,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -1823,6 +1823,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 38099304,
             "range": "± 263823",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b6b314bbe5e243a28b743dd67b2db30a1bfdb1fb",
+          "message": "fix: exclude directive lines from co-change trigger range (#25)\n\n## Why\nChanging only IfChange/ThenChange directives (e.g. updating a target\npath or adding a label) falsely triggered the co-change check, forcing\nusers to make meaningless edits to target files.\n\n## What\n- Additions on directive lines (`if_line`, `then_line`) are now excluded\nfrom the trigger range\n- Removals at `then_line` are only counted as content changes when\nThenChange is not being replaced\n- 12 new edge-case tests for directive-only changes\n- 4 existing tests updated to use actual content changes instead of\nrelying on the buggy behavior\n\n## Verify / Risk\n- [x] `cargo test` — 245 tests pass\n- Low risk: only narrows what counts as a trigger; real content changes\nare unaffected",
+          "timestamp": "2026-03-15T11:03:30+01:00",
+          "tree_id": "52409ab2b9aa4398a60e187a75beab9f714c3029",
+          "url": "https://github.com/slnc/ifchange/commit/b6b314bbe5e243a28b743dd67b2db30a1bfdb1fb"
+        },
+        "date": 1773569217337,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4291804,
+            "range": "± 67221",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7498384,
+            "range": "± 63444",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 39812785,
+            "range": "± 1495858",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 61865307,
+            "range": "± 1755192",
             "unit": "ns/iter"
           }
         ]
