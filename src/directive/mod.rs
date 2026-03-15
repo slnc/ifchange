@@ -71,4 +71,3 @@ mod tests {
         assert!(!looks_like_directive("the LINT.Check tool"));
     }
 }
-
