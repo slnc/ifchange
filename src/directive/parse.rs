@@ -54,6 +54,13 @@ fn effective_extension(file_path: &str) -> &str {
     {
         return "dockerfile";
     }
+    // "go.mod" and "go.sum" use // line comments
+    if filename.eq_ignore_ascii_case("go.mod") {
+        return "go.mod";
+    }
+    if filename.eq_ignore_ascii_case("go.sum") {
+        return "go.sum";
+    }
     file_path.rsplit('.').next().unwrap_or("")
 }
 
@@ -633,6 +640,21 @@ mod tests {
         assert_eq!(effective_extension("src/foo.rs"), "rs");
         assert_eq!(effective_extension("foo.py"), "py");
         assert_eq!(effective_extension("noext"), "noext");
+    }
+
+    #[test]
+    fn effective_extension_go_mod() {
+        assert_eq!(effective_extension("go.mod"), "go.mod");
+        assert_eq!(effective_extension("path/to/go.mod"), "go.mod");
+        assert_eq!(effective_extension("go.sum"), "go.sum");
+        assert_eq!(effective_extension("path/to/go.sum"), "go.sum");
+    }
+
+    #[test]
+    fn go_mod_parses_slash_comments() {
+        let content = "// LINT.IfChange\nrequire foo v1.0.0\n// LINT.ThenChange(\"other.go\")\n";
+        let directives = parse_directives_from_content(content, "go.mod").unwrap();
+        assert_eq!(then_targets(directives), vec!["other.go"]);
     }
 
     #[test]

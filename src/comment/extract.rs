@@ -19,7 +19,7 @@ const C_STYLE_EXTS: &[&str] = &[
 const C_BLOCK_ONLY_EXTS: &[&str] = &["css"];
 
 /// Extensions that support only `//` line comments (no block comments).
-const C_LINE_ONLY_EXTS: &[&str] = &["sass", "gleam"];
+const C_LINE_ONLY_EXTS: &[&str] = &["sass", "gleam", "go.mod", "go.sum"];
 
 /// Extensions that support `//` line comments and `(* *)` block comments (F#).
 const SLASH_PAREN_BLOCK_EXTS: &[&str] = &["fs", "fsx", "fsi"];
@@ -896,6 +896,35 @@ mod tests {
         // Mixed case
         assert_eq!(extract_comments("// note\n", "Rs"), vec![c(1, " note")]);
         assert_eq!(extract_comments("# note\n", "Py"), vec![c(1, " note")]);
+    }
+
+    #[test]
+    fn gomod_line_comments() {
+        // go.mod uses // line comments but not /* */ block comments
+        assert_eq!(
+            extract_comments(
+                "// indirect dependency\nrequire (\n\tgolang.org/x/text v0.3.0\n)\n",
+                "go.mod"
+            ),
+            vec![c(1, " indirect dependency")],
+        );
+    }
+
+    #[test]
+    fn gomod_no_block_comments() {
+        // go.mod should NOT recognize /* */ block comments
+        assert!(
+            extract_comments("/* not a comment */\nrequire foo v1.0.0\n", "go.mod").is_empty(),
+            "go.mod should not recognize /* */ comments",
+        );
+    }
+
+    #[test]
+    fn gosum_line_comments() {
+        assert_eq!(
+            extract_comments("// LINT.IfChange\nhash line\n", "go.sum"),
+            vec![c(1, " LINT.IfChange")],
+        );
     }
 
     #[test]
