@@ -9,7 +9,7 @@ use std::sync::Mutex;
 
 use crate::diff::parse_changed_lines;
 use crate::directive::{parse_directives_from_content, validate_directive_uniqueness};
-use crate::engine::{find_repo_root, lint_diff};
+use crate::engine::{find_repo_root, lint_diff, normalize_path_str, split_target_label};
 
 static COLOR_ENABLED: AtomicBool = AtomicBool::new(false);
 
@@ -164,7 +164,7 @@ fn run_inner(cli: Cli, verbose: bool, debug: bool, repo_root: &std::path::Path) 
     // Scan phase: validate directive syntax across a directory.
     if !cli.no_scan {
         let scan_dir = cli.scan.as_deref().unwrap_or(".");
-        let (scan_exit, scan_err_count) = run_scan(scan_dir, verbose, debug);
+        let (scan_exit, scan_err_count) = run_scan(scan_dir, verbose, debug, repo_root);
         scan_errors = scan_err_count;
         exit_code = exit_code.max(scan_exit);
     }
@@ -303,7 +303,7 @@ fn run_inner(cli: Cli, verbose: bool, debug: bool, repo_root: &std::path::Path) 
     exit_code
 }
 
-fn run_scan(dir: &str, verbose: bool, debug: bool) -> (i32, usize) {
+fn run_scan(dir: &str, verbose: bool, debug: bool, repo_root: &std::path::Path) -> (i32, usize) {
     let errors: Mutex<Vec<String>> = Mutex::new(Vec::new());
     let verbose_lines: Mutex<Vec<String>> = Mutex::new(Vec::new());
     let file_count = AtomicUsize::new(0);
@@ -382,6 +382,35 @@ fn run_scan(dir: &str, verbose: bool, debug: bool) -> (i32, usize) {
                     for err in dup_errors {
                         errs.push(err);
                     }
+                }
+
+                let parent = path.parent().unwrap_or(std::path::Path::new("."));
+                let mut target_errors: Vec<String> = Vec::new();
+                for d in &directives {
+                    if let crate::model::Directive::ThenChange { line, target } = d {
+                        let (target_name, _label) = split_target_label(target);
+                        if target_name.is_empty() {
+                            continue; // self-reference
+                        }
+                        let resolved = if let Some(stripped) = target_name.strip_prefix('/') {
+                            // Repo-root-relative: normalize and resolve from repo root
+                            let normalized = normalize_path_str(stripped.trim_start_matches('/'));
+                            repo_root.join(normalized)
+                        } else {
+                            parent.join(target_name)
+                        };
+                        let exists = resolved.canonicalize().is_ok();
+                        if !exists {
+                            target_errors.push(format!(
+                                "error: {}:{}: ThenChange target '{}' does not exist",
+                                file_path, line, target_name
+                            ));
+                        }
+                    }
+                }
+                if !target_errors.is_empty() {
+                    let mut errs = errors.lock().unwrap();
+                    errs.extend(target_errors);
                 }
             }
             Err(e) => {

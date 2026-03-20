@@ -35,7 +35,7 @@ pub fn find_repo_root(start: &Path) -> Option<std::path::PathBuf> {
     }
 }
 
-pub(super) fn split_target_label(target: &str) -> (&str, Option<&str>) {
+pub(crate) fn split_target_label(target: &str) -> (&str, Option<&str>) {
     if let Some(idx) = target.find('#') {
         (&target[..idx], Some(&target[idx + 1..]))
     } else {
@@ -43,7 +43,7 @@ pub(super) fn split_target_label(target: &str) -> (&str, Option<&str>) {
     }
 }
 
-pub(super) fn resolve_target_path(source_file: &str, target_name: &str) -> String {
+pub(crate) fn resolve_target_path(source_file: &str, target_name: &str) -> String {
     if target_name.is_empty() {
         return source_file.to_string();
     }
@@ -60,7 +60,7 @@ pub(super) fn resolve_target_path(source_file: &str, target_name: &str) -> Strin
     normalize_path_str(&joined.to_string_lossy().replace('\\', "/"))
 }
 
-pub(super) fn normalize_path_str(path: &str) -> String {
+pub(crate) fn normalize_path_str(path: &str) -> String {
     let is_absolute = path.starts_with('/');
     let mut parts: Vec<&str> = Vec::new();
     for component in path.split('/') {

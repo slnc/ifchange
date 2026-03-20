@@ -1106,6 +1106,98 @@ fn delete_after_block_with_thenchange_rewrite_no_trigger() {
 }
 
 #[test]
+fn deleted_target_file_is_error() {
+    // A.py has IfChange -> B.py, content in A.py changed, but B.py doesn't
+    // exist on disk (was deleted in a previous commit or never existed).
+    // The linter should report an error.
+    let (code, _, stderr) = lint_case(
+        &[
+            (
+                "a.py",
+                "# LINT.IfChange\nvalue = 2\n# LINT.ThenChange(\"b.py\")\n",
+            ),
+            // b.py intentionally NOT created
+        ],
+        &[(
+            "a.py",
+            "@@ -1,3 +1,3 @@\n # LINT.IfChange\n-value = 1\n+value = 2\n # LINT.ThenChange(\"b.py\")",
+        )],
+        &[],
+    );
+    assert_eq!(
+        code, 1,
+        "should fail when target file doesn't exist, stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("b.py"),
+        "error should mention the missing target, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn deleted_target_file_in_diff_is_error() {
+    // A.py has IfChange -> B.py, content in A.py changed, and B.py is
+    // deleted in the same diff. The linter should report an error because
+    // the target is gone.
+    let dir = TempDir::new().unwrap();
+    write_files(
+        dir.path(),
+        &[(
+            "a.py",
+            "# LINT.IfChange\nvalue = 2\n# LINT.ThenChange(\"b.py\")\n",
+        )],
+        // b.py not on disk (deleted)
+    );
+    let a_full = dir.path().join("a.py").to_string_lossy().replace('\\', "/");
+    let b_full = dir.path().join("b.py").to_string_lossy().replace('\\', "/");
+    let diff = format!(
+        "--- a/{a}\n+++ b/{a}\n@@ -1,3 +1,3 @@\n # LINT.IfChange\n-value = 1\n+value = 2\n # LINT.ThenChange(\"b.py\")\n--- a/{b}\n+++ /dev/null\n@@ -1,2 +0,0 @@\n-old line 1\n-old line 2\n",
+        a = a_full,
+        b = b_full,
+    );
+    let (code, _, stderr) = run_lint(&diff, &[]);
+    assert_eq!(
+        code, 1,
+        "should fail when target file is deleted in diff, stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("b.py"),
+        "error should mention the deleted target, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn deleted_target_file_with_label_is_error() {
+    // A.py has IfChange -> B.py#section, content in A.py changed, but B.py
+    // doesn't exist. Should report error.
+    let (code, _, stderr) = lint_case(
+        &[(
+            "a.py",
+            "# LINT.IfChange\nvalue = 2\n# LINT.ThenChange(\"b.py#section\")\n",
+        )],
+        &[(
+            "a.py",
+            "@@ -1,3 +1,3 @@\n # LINT.IfChange\n-value = 1\n+value = 2\n # LINT.ThenChange(\"b.py#section\")",
+        )],
+        &[],
+    );
+    assert_eq!(
+        code, 1,
+        "should fail when labeled target file doesn't exist, stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("b.py"),
+        "error should mention the missing target, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
 fn errors_go_to_stderr_not_stdout() {
     let (code, stdout, stderr) = lint_case(
         &[

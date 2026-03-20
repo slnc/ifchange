@@ -125,14 +125,27 @@ fn self_reference_absolute_path_with_label_unchanged() {
 #[test]
 fn scan_mode_accepts_mixed_absolute_and_relative() {
     let dir = TempDir::new().unwrap();
+    // Create .git so repo root points to this temp dir
+    std::fs::create_dir_all(dir.path().join(".git")).unwrap();
     write_files(
         dir.path(),
-        &[(
-            "a.py",
-            "# LINT.IfChange(\"rel\")\nA = 1\n# LINT.ThenChange(\"../b.py\")\n# LINT.IfChange(\"abs\")\nB = 1\n# LINT.ThenChange(/src/b.py)\n",
-        )],
+        &[
+            (
+                "a.py",
+                "# LINT.IfChange(\"rel\")\nA = 1\n# LINT.ThenChange(\"b.py\")\n# LINT.IfChange(\"abs\")\nB = 1\n# LINT.ThenChange(/src/b.py)\n",
+            ),
+            ("b.py", "target\n"),
+            ("src/b.py", "target\n"),
+        ],
     );
-    let (code, _, stderr) = run_scan(dir.path(), &["--no-lint", "-v"]);
+    // Run from the temp dir so repo root detection works
+    let output = std::process::Command::new(binary_path())
+        .args(["--no-lint", "-v", "-s", "."])
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    let code = output.status.code().unwrap_or(-1);
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
     assert_eq!(
         code, 0,
         "scan should accept both absolute and relative paths, stderr: {}",

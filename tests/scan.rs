@@ -97,10 +97,13 @@ fn scan_mode_lowercase_directives() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
-        &[(
-            "lower.ts",
-            "// lint.ifchange(\"lbl\")\nconst v = 1;\n// lint.thenchange(\"other.ts\")\n",
-        )],
+        &[
+            (
+                "lower.ts",
+                "// lint.ifchange(\"lbl\")\nconst v = 1;\n// lint.thenchange(\"other.ts\")\n",
+            ),
+            ("other.ts", "target\n"),
+        ],
     );
     let (code, _, stderr) = run_scan(dir.path(), &["--no-lint", "-v"]);
     assert_eq!(code, 0);
@@ -150,6 +153,10 @@ fn scan_mode_mixed_case_directives() {
                 "weird.go",
                 "// lInT.iFcHaNgE(\"d\")\ncode\n// LINT.thenchange(\"other.go\")\n",
             ),
+            ("other.ts", "target\n"),
+            ("other.py", "target\n"),
+            ("other.rs", "target\n"),
+            ("other.go", "target\n"),
         ],
     );
     let (code, _, stderr) = run_scan(dir.path(), &["--no-lint", "-v"]);
@@ -198,10 +205,13 @@ fn scan_mode_mixed_case_pair_within_file() {
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
-        &[(
-            "mixed_pair.ts",
-            "// lint.ifchange\ncode\n// LINT.THENCHANGE(\"other.ts\")\n",
-        )],
+        &[
+            (
+                "mixed_pair.ts",
+                "// lint.ifchange\ncode\n// LINT.THENCHANGE(\"other.ts\")\n",
+            ),
+            ("other.ts", "target\n"),
+        ],
     );
     let (code, _, stderr) = run_scan(dir.path(), &["--no-lint", "-v"]);
     assert_eq!(
@@ -234,6 +244,7 @@ fn scan_prefilter_rejects_non_directive_lint_dot() {
                 "real.ts",
                 "// LINT.IfChange\ncode\n// LINT.ThenChange(\"other.ts\")\n",
             ),
+            ("other.ts", "target\n"),
         ],
     );
     let (code, _, stderr) = run_scan(dir.path(), &["--no-lint", "-v"]);
@@ -246,14 +257,106 @@ fn scan_prefilter_rejects_non_directive_lint_dot() {
 }
 
 #[test]
-fn scan_verbose_shows_summary() {
+fn scan_detects_missing_target_file() {
+    // a.py references b.py which doesn't exist. Scan should report an error.
     let dir = TempDir::new().unwrap();
     write_files(
         dir.path(),
         &[(
-            "a.ts",
-            "// LINT.IfChange\nconst v = 1;\n// LINT.ThenChange(\"b.ts\")\n",
+            "a.py",
+            "# LINT.IfChange\nvalue = 1\n# LINT.ThenChange(\"b.py\")\n",
         )],
+    );
+    let (code, _, stderr) = run_scan(dir.path(), &[]);
+    assert_eq!(
+        code, 1,
+        "scan should fail when target file doesn't exist, stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("b.py"),
+        "error should mention the missing target, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn scan_accepts_existing_target_file() {
+    // a.py references b.py which exists. Scan should pass.
+    let dir = TempDir::new().unwrap();
+    write_files(
+        dir.path(),
+        &[
+            (
+                "a.py",
+                "# LINT.IfChange\nvalue = 1\n# LINT.ThenChange(\"b.py\")\n",
+            ),
+            ("b.py", "target content\n"),
+        ],
+    );
+    let (code, _, stderr) = run_scan(dir.path(), &[]);
+    assert_eq!(
+        code, 0,
+        "scan should pass when target file exists, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn scan_detects_missing_labeled_target_file() {
+    // a.py references b.py#section which doesn't exist. Scan should report an error.
+    let dir = TempDir::new().unwrap();
+    write_files(
+        dir.path(),
+        &[(
+            "a.py",
+            "# LINT.IfChange\nvalue = 1\n# LINT.ThenChange(\"b.py#section\")\n",
+        )],
+    );
+    let (code, _, stderr) = run_scan(dir.path(), &[]);
+    assert_eq!(
+        code, 1,
+        "scan should fail when labeled target file doesn't exist, stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("b.py"),
+        "error should mention the missing target, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn scan_self_referencing_target_is_ok() {
+    // a.py references itself (same file). Should pass since the file exists.
+    let dir = TempDir::new().unwrap();
+    write_files(
+        dir.path(),
+        &[(
+            "a.py",
+            "# LINT.IfChange\nvalue = 1\n# LINT.ThenChange(\"a.py\")\n",
+        )],
+    );
+    let (code, _, stderr) = run_scan(dir.path(), &[]);
+    assert_eq!(
+        code, 0,
+        "self-referencing target should pass, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn scan_verbose_shows_summary() {
+    let dir = TempDir::new().unwrap();
+    write_files(
+        dir.path(),
+        &[
+            (
+                "a.ts",
+                "// LINT.IfChange\nconst v = 1;\n// LINT.ThenChange(\"b.ts\")\n",
+            ),
+            ("b.ts", "target\n"),
+        ],
     );
     let (code, _, stderr) = run_scan(dir.path(), &["--no-lint", "-v"]);
     assert_eq!(code, 0);

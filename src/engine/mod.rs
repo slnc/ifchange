@@ -5,6 +5,7 @@ pub(crate) mod resolve;
 
 pub use lint::lint_diff;
 pub use resolve::find_repo_root;
+pub(crate) use resolve::{normalize_path_str, split_target_label};
 
 use std::collections::HashMap;
 
