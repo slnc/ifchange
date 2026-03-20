@@ -1106,6 +1106,50 @@ fn delete_after_block_with_thenchange_rewrite_no_trigger() {
 }
 
 #[test]
+fn deleting_target_file_without_touching_source_is_caught_by_scan() {
+    // Pre-commit scenario: A.py exists on disk with IfChange -> B.py.
+    // B.py is deleted (only B.py's deletion is in the diff, A.py is untouched).
+    // The lint phase alone won't catch this (A.py is not in the diff), but
+    // the scan phase will because it validates all ThenChange targets exist.
+    // The default mode runs both scan + lint, so this is caught.
+    let dir = TempDir::new().unwrap();
+    write_files(
+        dir.path(),
+        &[(
+            "a.py",
+            "# LINT.IfChange\nvalue = 1\n# LINT.ThenChange(\"b.py\")\n",
+        )],
+        // b.py not created (simulates deletion)
+    );
+    // Simulate the pre-commit hook: scan + lint from the repo directory
+    std::fs::create_dir_all(dir.path().join(".git")).unwrap();
+    let b_rel = "b.py";
+    let diff = format!(
+        "--- a/{b}\n+++ /dev/null\n@@ -1,2 +0,0 @@\n-old line 1\n-old line 2\n",
+        b = b_rel,
+    );
+    let tmp = tempfile::NamedTempFile::new().unwrap();
+    std::fs::write(tmp.path(), &diff).unwrap();
+    let output = std::process::Command::new(common::binary_path())
+        .arg(tmp.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    let code = output.status.code().unwrap_or(-1);
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert_eq!(
+        code, 1,
+        "should fail when deleting a file that other files reference, stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("b.py"),
+        "error should mention the deleted target, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
 fn deleted_target_file_is_error() {
     // A.py has IfChange -> B.py, content in A.py changed, but B.py doesn't
     // exist on disk (was deleted in a previous commit or never existed).
