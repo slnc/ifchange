@@ -46,8 +46,16 @@ jobs:
 
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2
 
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: '24'
+
+      - uses: taiki-e/install-action@854cac6590aa759ac55db7f79e5866185f97cacd # just
+        with:
+          tool: just
+
       - name: Test
-        run: cargo test
+        run: just test
 
   dep-hygiene:
     name: Dependency hygiene
