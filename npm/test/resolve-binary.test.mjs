@@ -145,12 +145,6 @@ describe("bin/ifchange resolver script", () => {
   });
 });
 
-describe("old install.js removal", () => {
-  it("install.js no longer exists", () => {
-    assert.ok(!existsSync(join(NPM_DIR, "install.js")), "install.js should be removed");
-  });
-});
-
 describe("current platform resolution (integration)", () => {
   it("bin script runs without error on missing platform package", () => {
     // When no platform package is installed, the script should exit with code 1

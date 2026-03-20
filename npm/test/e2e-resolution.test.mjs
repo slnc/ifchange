@@ -9,7 +9,7 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, copyFileSync, mkdirSync, rmSync, symlinkSync } from "node:fs";
+import { existsSync, copyFileSync, mkdirSync, rmSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import os from "node:os";
@@ -71,42 +71,29 @@ describe("e2e binary resolution", () => {
     }
   });
 
-  it("resolver finds and executes the platform binary via require.resolve", () => {
-    const result = spawnSync("node", [join(NPM_DIR, "bin", "ifchange"), "--version"], {
-      stdio: "pipe",
-      timeout: 10_000,
-      env: { ...process.env, NODE_PATH: tmpNodeModules },
+  for (const [label, env] of [
+    ["via require.resolve", { ...process.env, NODE_PATH: tmpNodeModules }],
+    ["via IFCHANGE_BINARY override", { ...process.env, NODE_PATH: tmpNodeModules, IFCHANGE_BINARY: builtBinPath }],
+  ]) {
+    it(`resolver finds and executes the platform binary ${label}`, () => {
+      const result = spawnSync("node", [join(NPM_DIR, "bin", "ifchange"), "--version"], {
+        stdio: "pipe",
+        timeout: 1000,
+        env,
+      });
+
+      const stdout = result.stdout?.toString().trim() || "";
+      const stderr = result.stderr?.toString().trim() || "";
+
+      assert.equal(result.status, 0, `should exit 0, got ${result.status}. stderr: ${stderr}`);
+      assert.match(stdout, /\d+\.\d+\.\d+/, `should print version, got: ${stdout}`);
     });
-
-    const stdout = result.stdout?.toString().trim() || "";
-    const stderr = result.stderr?.toString().trim() || "";
-
-    assert.equal(result.status, 0, `should exit 0, got ${result.status}. stderr: ${stderr}`);
-    assert.match(stdout, /\d+\.\d+\.\d+/, `should print version, got: ${stdout}`);
-  });
-
-  it("IFCHANGE_BINARY env override with absolute path works", () => {
-    const result = spawnSync("node", [join(NPM_DIR, "bin", "ifchange"), "--version"], {
-      stdio: "pipe",
-      timeout: 10_000,
-      env: {
-        ...process.env,
-        NODE_PATH: tmpNodeModules,
-        IFCHANGE_BINARY: builtBinPath,
-      },
-    });
-
-    const stdout = result.stdout?.toString().trim() || "";
-    const stderr = result.stderr?.toString().trim() || "";
-
-    assert.equal(result.status, 0, `should exit 0, got ${result.status}. stderr: ${stderr}`);
-    assert.match(stdout, /\d+\.\d+\.\d+/, `should print version, got: ${stdout}`);
-  });
+  }
 
   it("passes arguments through to the binary", () => {
     const result = spawnSync("node", [join(NPM_DIR, "bin", "ifchange"), "--help"], {
       stdio: "pipe",
-      timeout: 10_000,
+      timeout: 1000,
       env: { ...process.env, NODE_PATH: tmpNodeModules },
     });
 
