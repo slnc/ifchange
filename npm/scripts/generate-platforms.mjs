@@ -5,7 +5,7 @@
  *
  * Run: node npm/scripts/generate-platforms.mjs
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -42,7 +42,9 @@ for (const p of PLATFORMS) {
     files: [bin],
   };
 
-  const path = resolve(PLATFORMS_DIR, dirName, "package.json");
+  const pkgDir = resolve(PLATFORMS_DIR, dirName);
+  mkdirSync(pkgDir, { recursive: true });
+  const path = resolve(pkgDir, "package.json");
   writeFileSync(path, JSON.stringify(manifest, null, 2) + "\n");
   console.log(`Generated ${path}`);
 }

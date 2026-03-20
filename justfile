@@ -70,6 +70,11 @@ test:
         cat "$out"
         exit 1
     fi
+
+test_npm:
+    #!/usr/bin/env bash
+    set -eu
+    node npm/scripts/generate-platforms.mjs
     out_node="$(node --test npm/test/resolve-binary.test.mjs 2>&1)" || { echo "$out_node"; exit 1; }
     pass=$(echo "$out_node" | grep '^# pass' | cut -d' ' -f3 || true)
     fail=$(echo "$out_node" | grep '^# fail' | cut -d' ' -f3 || true)

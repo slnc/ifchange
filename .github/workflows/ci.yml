@@ -55,7 +55,7 @@ jobs:
           tool: just
 
       - name: Test
-        run: just test
+        run: just test test_npm
 
   dep-hygiene:
     name: Dependency hygiene
