@@ -43,7 +43,7 @@ pub(crate) fn split_target_label(target: &str) -> (&str, Option<&str>) {
     }
 }
 
-pub(crate) fn resolve_target_path(source_file: &str, target_name: &str) -> String {
+pub(super) fn resolve_target_path(source_file: &str, target_name: &str) -> String {
     if target_name.is_empty() {
         return source_file.to_string();
     }

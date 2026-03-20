@@ -399,8 +399,7 @@ fn run_scan(dir: &str, verbose: bool, debug: bool, repo_root: &std::path::Path) 
                         } else {
                             parent.join(target_name)
                         };
-                        let exists = resolved.canonicalize().is_ok();
-                        if !exists {
+                        if !resolved.exists() {
                             target_errors.push(format!(
                                 "error: {}:{}: ThenChange target '{}' does not exist",
                                 file_path, line, target_name
