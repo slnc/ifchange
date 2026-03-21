@@ -132,10 +132,7 @@ pub fn parse_directives_from_content(
             // ThenChange
             if starts_with_ci(line_text.trim(), "LINT.ThenChange") {
                 let trimmed = line_text.trim();
-                if starts_with_ci(trimmed, "LINT.ThenChange")
-                    && trimmed.contains('(')
-                    && !trimmed.contains(')')
-                {
+                if trimmed.contains('(') && !trimmed.contains(')') {
                     // Multi-line: accumulate until ')'
                     let mut accumulated = line_text.to_string();
                     let directive_line = current_line;
@@ -157,15 +154,19 @@ pub fn parse_directives_from_content(
 
                     // If not found and this is a single-line comment, look at subsequent comments
                     if !found_close && comment_lines.len() == 1 {
+                        let mut expected_line = comment.start_line + 1;
                         let mut next_ci = comment_idx + 1;
                         while next_ci < comments.len() {
                             let next_comment = &comments[next_ci];
-                            // Only consume consecutive single-line comments
-                            if next_comment.text.lines().count() != 1 {
+                            // Only consume truly adjacent single-line comments
+                            if next_comment.text.lines().count() != 1
+                                || next_comment.start_line != expected_line
+                            {
                                 break;
                             }
                             accumulated.push(' ');
                             accumulated.push_str(&next_comment.text);
+                            expected_line += 1;
                             if next_comment.text.contains(')') {
                                 next_ci += 1;
                                 found_close = true;
@@ -174,7 +175,9 @@ pub fn parse_directives_from_content(
                             next_ci += 1;
                         }
                         if found_close {
-                            comment_idx = next_ci;
+                            // next_ci points past the last consumed comment.
+                            // Subtract 1 because the outer loop does comment_idx += 1.
+                            comment_idx = next_ci - 1;
                         }
                     }
 
@@ -202,6 +205,38 @@ pub fn parse_directives_from_content(
                             break;
                         }
                         continue;
+                    }
+                    // Fallback: multi-line without brackets (e.g., quoted targets separated by commas)
+                    if let Some(caps) = pats.then_change_fallback.captures(&accumulated) {
+                        let raw = caps.get(1).unwrap().as_str().trim();
+                        let targets = parse_array_targets(raw);
+                        if !targets.is_empty() {
+                            for target in targets {
+                                directives.push(Directive::ThenChange {
+                                    line: directive_line,
+                                    target,
+                                });
+                            }
+                            if found_close && comment_lines.len() == 1 {
+                                break;
+                            }
+                            continue;
+                        }
+                        // Single unquoted target fallback (mirrors single-line behavior)
+                        let target = raw
+                            .trim_matches(|c| c == '\'' || c == '"')
+                            .trim()
+                            .to_string();
+                        if !target.is_empty() {
+                            directives.push(Directive::ThenChange {
+                                line: directive_line,
+                                target,
+                            });
+                            if found_close && comment_lines.len() == 1 {
+                                break;
+                            }
+                            continue;
+                        }
                     }
                     return Err(DirectiveParseError::MalformedDirective {
                         directive: "LINT.ThenChange",
@@ -348,25 +383,28 @@ pub fn parse_directives_from_content(
 }
 
 fn parse_array_targets(inner: &str) -> Vec<String> {
-    static QUOTED: OnceLock<Regex> = OnceLock::new();
-    let re = QUOTED.get_or_init(|| Regex::new(r#"['\"]([^'\"]*)['\"]"#).unwrap());
-    let quoted: Vec<String> = re
-        .captures_iter(inner)
-        .map(|c| c.get(1).unwrap().as_str().to_string())
-        .filter(|s| !s.is_empty())
-        .collect();
-    if !quoted.is_empty() {
-        return quoted;
-    }
-    // Fallback: split on comma for unquoted targets like "foo.txt, bar.txt"
-    if inner.contains(',') {
-        return inner
-            .split(',')
-            .map(|s| s.trim().to_string())
+    if !inner.contains(',') {
+        // Single target: try stripping quotes
+        static QUOTED: OnceLock<Regex> = OnceLock::new();
+        let re = QUOTED.get_or_init(|| Regex::new(r#"['\"]([^'\"]*)['\"]"#).unwrap());
+        return re
+            .captures_iter(inner)
+            .map(|c| c.get(1).unwrap().as_str().to_string())
             .filter(|s| !s.is_empty())
             .collect();
     }
-    Vec::new()
+    // Split on commas, strip quotes from each element.
+    // Handles quoted, unquoted, and mixed lists uniformly.
+    inner
+        .split(',')
+        .map(|s| {
+            s.trim()
+                .trim_matches(|c| c == '\'' || c == '"')
+                .trim()
+                .to_string()
+        })
+        .filter(|s| !s.is_empty())
+        .collect()
 }
 
 #[cfg(test)]
@@ -876,5 +914,196 @@ mod bug_tests {
                 "failed for variant: {variant}"
             );
         }
+    }
+
+    // ── Multi-line ThenChange without brackets ──
+
+    #[test]
+    fn thenchange_multiline_no_brackets_double_quoted() {
+        let content = "\
+// LINT.ThenChange(
+//   \"a.ts\",
+//   \"b.ts\",
+// )
+";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.ts", "b.ts"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_no_brackets_hash_comments() {
+        let content = "\
+# LINT.ThenChange(
+#   'a.py',
+#   'b.py',
+# )
+";
+        let directives = parse_directives_from_content(content, "x.yml").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.py", "b.py"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_no_brackets_dash_comments() {
+        let content = "\
+-- LINT.ThenChange(
+--   'a.sql',
+--   'b.sql',
+-- )
+";
+        let directives = parse_directives_from_content(content, "x.sql").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.sql", "b.sql"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_no_brackets_close_on_last_target_line() {
+        let content = "\
+// LINT.ThenChange(
+//   'a.ts',
+//   'b.ts')
+";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.ts", "b.ts"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_no_brackets_no_trailing_comma() {
+        let content = "\
+// LINT.ThenChange(
+//   'a.ts',
+//   'b.ts'
+// )
+";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.ts", "b.ts"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_no_brackets_directive_after_block_not_skipped() {
+        let content = "\
+// LINT.IfChange
+// LINT.ThenChange(
+//   'a.ts',
+// )
+// LINT.IfChange
+// LINT.ThenChange(
+//   'b.ts',
+// )
+";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        // Verify all directives are found (no skipped IfChange)
+        assert_eq!(
+            directives.len(),
+            4,
+            "expected 2 IfChange + 2 ThenChange, got: {directives:?}"
+        );
+        assert!(matches!(&directives[0], Directive::IfChange { .. }));
+        assert!(matches!(&directives[1], Directive::ThenChange { target, .. } if target == "a.ts"));
+        assert!(matches!(&directives[2], Directive::IfChange { .. }));
+        assert!(matches!(&directives[3], Directive::ThenChange { target, .. } if target == "b.ts"));
+    }
+
+    #[test]
+    fn thenchange_multiline_no_brackets_block_comment() {
+        let content = "/*\nLINT.ThenChange(\n\"a.ts\",\n\"b.ts\",\n)\n*/\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["a.ts", "b.ts"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_no_brackets_unclosed_errors() {
+        let content = "\
+// LINT.ThenChange(
+//   'a.ts',
+//   'b.ts',
+";
+        let err = parse_directives_from_content(content, "x.ts").unwrap_err();
+        assert!(err.to_string().contains("Malformed LINT.ThenChange"));
+    }
+
+    #[test]
+    fn thenchange_multiline_no_brackets_unquoted_single_target() {
+        // Bug: multi-line ThenChange(\nfoo.txt\n) with unquoted single target should work
+        let content = "\
+// LINT.ThenChange(
+//   foo.txt
+// )
+";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["foo.txt"]);
+    }
+
+    #[test]
+    fn thenchange_multiline_no_brackets_unquoted_single_target_block_comment() {
+        let content = "/*\nLINT.ThenChange(\nfoo.txt\n)\n*/\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        assert_eq!(then_targets(directives), vec!["foo.txt"]);
+    }
+
+    // Bug: non-adjacent comments should NOT be consumed by multi-line ThenChange scan.
+    // A blank line or code between comment lines must stop the continuation.
+    #[test]
+    fn thenchange_multiline_non_adjacent_comments_not_consumed() {
+        // Line 1: // LINT.ThenChange(
+        // Line 2: (blank)
+        // Line 3: // )
+        // The blank line breaks adjacency, so the ThenChange( is unclosed.
+        let content = "// LINT.ThenChange(\n\n// )\n";
+        let err = parse_directives_from_content(content, "x.ts").unwrap_err();
+        assert!(
+            err.to_string().contains("Malformed LINT.ThenChange"),
+            "non-adjacent should be malformed, got: {}",
+            err
+        );
+    }
+
+    // Bug: non-adjacent comments with code in between should not be consumed.
+    #[test]
+    fn thenchange_multiline_code_between_comments_not_consumed() {
+        // Line 1: // LINT.ThenChange(
+        // Line 2: const x = 1;
+        // Line 3: // "a.ts"
+        // Line 4: // )
+        let content = "// LINT.ThenChange(\nconst x = 1;\n// \"a.ts\"\n// )\n";
+        let err = parse_directives_from_content(content, "x.ts").unwrap_err();
+        assert!(
+            err.to_string().contains("Malformed LINT.ThenChange"),
+            "code gap should be malformed, got: {}",
+            err
+        );
+    }
+
+    // Bug: mixed quoted and unquoted targets silently drops the unquoted ones.
+    #[test]
+    fn thenchange_mixed_quoted_unquoted_is_malformed() {
+        // "a.ts" is quoted, b.ts is not. Should not silently drop b.ts.
+        let content = "// LINT.ThenChange(\"a.ts\", b.ts)\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        let targets = then_targets(directives);
+        // Must include both targets, not just the quoted one
+        assert_eq!(
+            targets.len(),
+            2,
+            "should have 2 targets, got: {:?}",
+            targets
+        );
+    }
+
+    // Same bug in multi-line form
+    #[test]
+    fn thenchange_multiline_mixed_quoted_unquoted_is_malformed() {
+        let content = "\
+// LINT.ThenChange(
+//   \"a.ts\",
+//   b.ts,
+// )
+";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        let targets = then_targets(directives);
+        assert_eq!(
+            targets.len(),
+            2,
+            "should have 2 targets, got: {:?}",
+            targets
+        );
     }
 }
