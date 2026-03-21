@@ -1,6 +1,6 @@
 {
   "name": "@slnc/ifchange",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A fast linter for enforcing conditional change directives in source code",
   "license": "MIT",
   "repository": {
@@ -22,10 +22,10 @@
     "win32"
   ],
   "optionalDependencies": {
-    "@slnc/ifchange-linux-x64": "0.2.1",
-    "@slnc/ifchange-linux-arm64": "0.2.1",
-    "@slnc/ifchange-darwin-x64": "0.2.1",
-    "@slnc/ifchange-darwin-arm64": "0.2.1",
-    "@slnc/ifchange-win32-x64": "0.2.1"
+    "@slnc/ifchange-linux-x64": "0.3.0",
+    "@slnc/ifchange-linux-arm64": "0.3.0",
+    "@slnc/ifchange-darwin-x64": "0.3.0",
+    "@slnc/ifchange-darwin-arm64": "0.3.0",
+    "@slnc/ifchange-win32-x64": "0.3.0"
   }
 }
