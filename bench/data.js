@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774089242386,
+  "lastUpdate": 1774098951759,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -2159,6 +2159,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 57749469,
             "range": "± 1310528",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c28d832556c19ff8d2ec3ef2da396210096b8e4c",
+          "message": "fix: scan validates pairing, labels, and orphans (#36)\n\n## Why\nScan mode only checked for parse errors, duplicate labels, and missing\ntarget files. Orphan directives, missing labels in targets, and\nself-reference label errors went undetected until lint time.\n\n## What\n- Add `validate_directive_pairing` to detect orphan IfChange/ThenChange\nand consecutive IfChange without intervening ThenChange\n- Scan now validates that referenced labels exist in target files\n- Scan validates self-reference labels (`#label`) exist in the same file\n- Lint test helpers (`run_lint`, `run_lint_stdin`) pass `--no-scan` to\nisolate lint tests from scan-phase side effects\n- 16 new integration tests covering all identified gaps\n\n## Verify\n- [x] `just test`: 322 passed (vs 306 on origin/main), 0 failed\n- [x] `just check`: fmt + clippy clean",
+          "timestamp": "2026-03-21T14:12:45+01:00",
+          "tree_id": "39d0d0ebdb5a81522a852e01c06cf3854eb61724",
+          "url": "https://github.com/slnc/ifchange/commit/c28d832556c19ff8d2ec3ef2da396210096b8e4c"
+        },
+        "date": 1774098951286,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4394936,
+            "range": "± 98187",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 6441828,
+            "range": "± 283989",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 37469367,
+            "range": "± 979568",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 37685623,
+            "range": "± 1094225",
             "unit": "ns/iter"
           }
         ]
