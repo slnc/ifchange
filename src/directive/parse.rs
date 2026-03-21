@@ -850,12 +850,16 @@ mod bug_tests {
     // ── Multi-line ThenChange without brackets ──
 
     #[rstest]
-    #[case("// LINT.ThenChange(\n//   \"a.ts\",\n//   \"b.ts\",\n// )\n", "x.ts")]
-    #[case("# LINT.ThenChange(\n#   'a.py',\n#   'b.py',\n# )\n", "x.yml")]
-    #[case("-- LINT.ThenChange(\n--   'a.sql',\n--   'b.sql',\n-- )\n", "x.sql")]
-    fn thenchange_multiline_no_brackets_comment_styles(#[case] content: &str, #[case] ext: &str) {
+    #[case("// LINT.ThenChange(\n//   \"a.ts\",\n//   \"b.ts\",\n// )\n", "x.ts", vec!["a.ts", "b.ts"])]
+    #[case("# LINT.ThenChange(\n#   'a.py',\n#   'b.py',\n# )\n", "x.yml", vec!["a.py", "b.py"])]
+    #[case("-- LINT.ThenChange(\n--   'a.sql',\n--   'b.sql',\n-- )\n", "x.sql", vec!["a.sql", "b.sql"])]
+    fn thenchange_multiline_no_brackets_comment_styles(
+        #[case] content: &str,
+        #[case] ext: &str,
+        #[case] expected: Vec<&str>,
+    ) {
         let directives = parse_directives_from_content(content, ext).unwrap();
-        assert_eq!(then_targets(directives).len(), 2);
+        assert_eq!(then_targets(directives), expected);
     }
 
     #[test]
@@ -932,10 +936,10 @@ mod bug_tests {
     }
 
     #[rstest]
-    #[case("// LINT.ThenChange(\"a.ts\", b.ts)\n")]
-    #[case("// LINT.ThenChange(\n//   \"a.ts\",\n//   b.ts,\n// )\n")]
-    fn thenchange_mixed_quoted_unquoted(#[case] content: &str) {
+    #[case("// LINT.ThenChange(\"a.ts\", b.ts)\n", vec!["a.ts", "b.ts"])]
+    #[case("// LINT.ThenChange(\n//   \"a.ts\",\n//   b.ts,\n// )\n", vec!["a.ts", "b.ts"])]
+    fn thenchange_mixed_quoted_unquoted(#[case] content: &str, #[case] expected: Vec<&str>) {
         let directives = parse_directives_from_content(content, "x.ts").unwrap();
-        assert_eq!(then_targets(directives).len(), 2);
+        assert_eq!(then_targets(directives), expected);
     }
 }
