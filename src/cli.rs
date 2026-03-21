@@ -164,7 +164,18 @@ fn run_inner(cli: Cli, verbose: bool, debug: bool, repo_root: &std::path::Path) 
     // Scan phase: validate directive syntax across a directory.
     if !cli.no_scan {
         let scan_dir = cli.scan.as_deref().unwrap_or(".");
-        let (scan_exit, scan_err_count) = run_scan(scan_dir, verbose, debug, repo_root);
+        let scan_root = if cli.scan.is_some() {
+            let scan_path = std::path::Path::new(scan_dir);
+            let scan_abs = if scan_path.is_absolute() {
+                scan_path.to_path_buf()
+            } else {
+                repo_root.join(scan_path)
+            };
+            find_repo_root(&scan_abs).unwrap_or(scan_abs)
+        } else {
+            repo_root.to_path_buf()
+        };
+        let (scan_exit, scan_err_count) = run_scan(scan_dir, verbose, debug, &scan_root);
         scan_errors = scan_err_count;
         exit_code = exit_code.max(scan_exit);
     }

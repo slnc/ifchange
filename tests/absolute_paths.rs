@@ -158,6 +158,39 @@ fn scan_mode_accepts_mixed_absolute_and_relative() {
     );
 }
 
+/// Regression: scanning a remote directory with -s /path should discover the
+/// repo root from that directory, not from the launcher's CWD.
+#[test]
+fn scan_remote_dir_resolves_repo_root_from_scan_target() {
+    let dir = TempDir::new().unwrap();
+    std::fs::create_dir_all(dir.path().join(".git")).unwrap();
+    write_files(
+        dir.path(),
+        &[
+            (
+                "a.py",
+                "# LINT.IfChange\nA = 1\n# LINT.ThenChange(/lib/b.py)\n",
+            ),
+            ("lib/b.py", "target\n"),
+        ],
+    );
+    // Run from a DIFFERENT directory (not the scanned repo), passing the
+    // scan target as an absolute path. The repo root should be discovered
+    // from the scan target, not from the launcher CWD.
+    let scan_path = dir.path().to_string_lossy().to_string();
+    let output = std::process::Command::new(binary_path())
+        .args(["--no-lint", "-s", &scan_path])
+        .output()
+        .unwrap();
+    let code = output.status.code().unwrap_or(-1);
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert_eq!(
+        code, 0,
+        "scan with -s /abs/path should resolve repo root from scan target, stderr: {}",
+        stderr
+    );
+}
+
 #[test]
 fn unicode_in_absolute_path() {
     let dir = TempDir::new().unwrap();
