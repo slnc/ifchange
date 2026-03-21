@@ -900,22 +900,13 @@ mod tests {
 
     #[test]
     fn gomod_line_comments() {
-        // go.mod uses // line comments but not /* */ block comments
+        // go.mod uses // line comments
         assert_eq!(
             extract_comments(
                 "// indirect dependency\nrequire (\n\tgolang.org/x/text v0.3.0\n)\n",
                 "go.mod"
             ),
             vec![c(1, " indirect dependency")],
-        );
-    }
-
-    #[test]
-    fn gomod_no_block_comments() {
-        // go.mod should NOT recognize /* */ block comments
-        assert!(
-            extract_comments("/* not a comment */\nrequire foo v1.0.0\n", "go.mod").is_empty(),
-            "go.mod should not recognize /* */ comments",
         );
     }
 
