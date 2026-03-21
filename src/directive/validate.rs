@@ -1,5 +1,34 @@
 use crate::model::Directive;
 
+/// Check whether any directive in `directives` defines a label with the given name.
+/// Matches both `Label("name")` and `IfChange("name")` directives.
+pub fn directives_have_label(directives: &[Directive], label_name: &str) -> bool {
+    directives.iter().any(|d| match d {
+        Directive::Label { name, .. } => name == label_name,
+        Directive::IfChange { label: Some(l), .. } => l == label_name,
+        _ => false,
+    })
+}
+
+/// Collect all label names defined in a directive list.
+pub fn collect_label_names(directives: &[Directive]) -> Vec<&str> {
+    directives
+        .iter()
+        .filter_map(|d| match d {
+            Directive::Label { name, .. } => Some(name.as_str()),
+            Directive::IfChange { label: Some(l), .. } => Some(l.as_str()),
+            _ => None,
+        })
+        .collect()
+}
+
+fn format_ifchange_ctx(label: Option<&str>) -> String {
+    match label {
+        Some(l) => format!(" after IfChange('{}')", l),
+        None => " after IfChange".to_string(),
+    }
+}
+
 /// Check that IfChange/ThenChange directives are properly paired within a file.
 ///
 /// Detects:
@@ -19,13 +48,11 @@ pub fn validate_directive_pairing(directives: &[Directive], file_path: &str) -> 
         match directive {
             Directive::IfChange { line, label } => {
                 if let Some((prev_line, prev_label)) = pending_if {
-                    let label_ctx = match prev_label {
-                        Some(l) => format!(" after IfChange('{}')", l),
-                        None => " after IfChange".to_string(),
-                    };
                     errors.push(format!(
                         "error: {}:{}: missing ThenChange{}",
-                        file_path, prev_line, label_ctx
+                        file_path,
+                        prev_line,
+                        format_ifchange_ctx(prev_label)
                     ));
                 }
                 pending_if = Some((*line, label.as_deref()));
@@ -47,13 +74,11 @@ pub fn validate_directive_pairing(directives: &[Directive], file_path: &str) -> 
     }
 
     if let Some((line, label)) = pending_if {
-        let label_ctx = match label {
-            Some(l) => format!(" after IfChange('{}')", l),
-            None => " after IfChange".to_string(),
-        };
         errors.push(format!(
             "error: {}:{}: missing ThenChange{}",
-            file_path, line, label_ctx
+            file_path,
+            line,
+            format_ifchange_ctx(label)
         ));
     }
 

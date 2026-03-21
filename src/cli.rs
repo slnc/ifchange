@@ -9,7 +9,8 @@ use std::sync::Mutex;
 
 use crate::diff::parse_changed_lines;
 use crate::directive::{
-    parse_directives_from_content, validate_directive_pairing, validate_directive_uniqueness,
+    collect_label_names, directives_have_label, parse_directives_from_content,
+    validate_directive_pairing, validate_directive_uniqueness,
 };
 use crate::engine::{find_repo_root, lint_diff, normalize_path_str, split_target_label};
 
@@ -322,7 +323,14 @@ fn validate_thenchange_targets(
     repo_root: &std::path::Path,
     file_path: &str,
 ) -> Vec<String> {
+    use std::collections::HashMap;
+
     let mut errors = Vec::new();
+    // Cache parsed target files to avoid N+1 reads when multiple directives
+    // reference labels in the same file.
+    let mut target_cache: HashMap<std::path::PathBuf, Option<Vec<crate::model::Directive>>> =
+        HashMap::new();
+
     for d in directives {
         if let crate::model::Directive::ThenChange { line, target } = d {
             let (target_name, label) = split_target_label(target);
@@ -330,11 +338,7 @@ fn validate_thenchange_targets(
             // Self-reference: validate label exists in own file
             if target_name.is_empty() {
                 if let Some(label_name) = label {
-                    let has_label = directives.iter().any(|d| {
-                        matches!(d, crate::model::Directive::Label { name, .. } if name == label_name)
-                            || matches!(d, crate::model::Directive::IfChange { label: Some(l), .. } if l == label_name)
-                    });
-                    if !has_label {
+                    if !directives_have_label(directives, label_name) {
                         errors.push(format!(
                             "error: {}:{}: self-reference label '{}' not found in file",
                             file_path, line, label_name
@@ -368,33 +372,23 @@ fn validate_thenchange_targets(
                     "error: {}:{}: ThenChange target '{}' is a directory; add trailing '/' if intentional",
                     file_path, line, target_name
                 ));
-            } else if !resolved.exists() {
+            } else if !resolved.is_file() {
                 errors.push(format!(
                     "error: {}:{}: ThenChange target '{}' does not exist",
                     file_path, line, target_name
                 ));
             } else if let Some(label_name) = label {
-                // File exists, check if the referenced label exists in target
-                let resolved_str = resolved.to_string_lossy();
-                if let Ok(target_directives) = parse_directives_from_content(
-                    &std::fs::read_to_string(&resolved).unwrap_or_default(),
-                    &resolved_str,
-                ) {
-                    let has_label = target_directives.iter().any(|d| {
-                        matches!(d, crate::model::Directive::Label { name, .. } if name == label_name)
-                            || matches!(d, crate::model::Directive::IfChange { label: Some(l), .. } if l == label_name)
-                    });
-                    if !has_label {
-                        let available: Vec<&str> = target_directives
-                            .iter()
-                            .filter_map(|d| match d {
-                                crate::model::Directive::Label { name, .. } => Some(name.as_str()),
-                                crate::model::Directive::IfChange { label: Some(l), .. } => {
-                                    Some(l.as_str())
-                                }
-                                _ => None,
-                            })
-                            .collect();
+                // File exists, check if the referenced label exists in target.
+                // Use cache to avoid re-reading the same file for multiple label refs.
+                let target_directives = target_cache.entry(resolved.clone()).or_insert_with(|| {
+                    let resolved_str = resolved.to_string_lossy();
+                    std::fs::read_to_string(&resolved).ok().and_then(|content| {
+                        parse_directives_from_content(&content, &resolved_str).ok()
+                    })
+                });
+                if let Some(ref tds) = target_directives {
+                    if !directives_have_label(tds, label_name) {
+                        let available = collect_label_names(tds);
                         let avail_str = if available.is_empty() {
                             "none".to_string()
                         } else {

@@ -156,3 +156,22 @@ pub fn run_scan_in_repo(dir: &Path, args: &[&str]) -> (i32, String, String) {
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
     (code, stdout, stderr)
 }
+
+/// Run the binary with scan+lint in an empty git repo directory.
+/// Useful for tests that verify verbose/debug output with both phases enabled.
+pub fn run_in_empty_repo(args: &[&str]) -> (i32, String, String) {
+    let dir = TempDir::new().unwrap();
+    fs::create_dir_all(dir.path().join(".git")).unwrap();
+    let tmp = tempfile::NamedTempFile::new().unwrap();
+    fs::write(tmp.path(), "").unwrap();
+    let output = Command::new(binary_path())
+        .args(args)
+        .arg(tmp.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    let code = output.status.code().unwrap_or(-1);
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    (code, stdout, stderr)
+}
