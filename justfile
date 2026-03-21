@@ -61,15 +61,24 @@ test:
             }
             END {
                 if (suites == 0) {
-                    print "Test totals: 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out";
+                    print "Rust: 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out";
                 } else {
-                    printf "Test totals: %d passed; %d failed; %d ignored; %d measured; %d filtered out\n", passed, failed, ignored, measured, filtered;
+                    printf "Rust: %d passed; %d failed; %d ignored; %d measured; %d filtered out\n", passed, failed, ignored, measured, filtered;
                 }
             }' "$out"
     else
         cat "$out"
         exit 1
     fi
+
+test_npm:
+    #!/usr/bin/env bash
+    set -eu
+    node npm/scripts/generate-platforms.mjs
+    out_node="$(node --test npm/test/resolve-binary.test.mjs 2>&1)" || { echo "$out_node"; exit 1; }
+    pass=$(echo "$out_node" | grep '^# pass' | cut -d' ' -f3 || true)
+    fail=$(echo "$out_node" | grep '^# fail' | cut -d' ' -f3 || true)
+    echo "Node: ${pass:-0} passed; ${fail:-0} failed"
 
 test_coverage:
     cargo llvm-cov --workspace --all-features --html
