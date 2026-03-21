@@ -57,12 +57,9 @@ fn effective_extension(file_path: &str) -> &str {
     {
         return "dockerfile";
     }
-    // "go.mod" and "go.sum" use // line comments
+    // "go.mod" uses // line comments
     if filename.eq_ignore_ascii_case("go.mod") {
         return "go.mod";
-    }
-    if filename.eq_ignore_ascii_case("go.sum") {
-        return "go.sum";
     }
     filename.rsplit('.').next().unwrap_or("")
 }
@@ -649,8 +646,6 @@ mod tests {
     fn effective_extension_go_mod() {
         assert_eq!(effective_extension("go.mod"), "go.mod");
         assert_eq!(effective_extension("path/to/go.mod"), "go.mod");
-        assert_eq!(effective_extension("go.sum"), "go.sum");
-        assert_eq!(effective_extension("path/to/go.sum"), "go.sum");
     }
 
     #[test]
