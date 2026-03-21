@@ -112,8 +112,10 @@ describe("bin/ifchange resolver script", () => {
 
   it("exists and is executable", () => {
     assert.ok(existsSync(binPath), "bin/ifchange should exist");
-    const mode = statSync(binPath).mode;
-    assert.ok(mode & 0o111, "bin/ifchange should be executable");
+    if (process.platform !== "win32") {
+      const mode = statSync(binPath).mode;
+      assert.ok(mode & 0o111, "bin/ifchange should be executable");
+    }
   });
 
   it("has correct shebang", () => {
