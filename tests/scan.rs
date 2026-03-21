@@ -282,7 +282,11 @@ fn scan_multiline_thenchange_no_brackets_valid() {
         )],
     );
     let (code, _, stderr) = run_scan(dir.path(), &["--no-lint", "-v"]);
-    assert_eq!(code, 0, "valid multi-line no-brackets should pass scan, stderr: {}", stderr);
+    assert_eq!(
+        code, 0,
+        "valid multi-line no-brackets should pass scan, stderr: {}",
+        stderr
+    );
     assert!(
         stderr.contains("1 directive pair"),
         "should detect 1 pair, stderr: {}",
@@ -301,7 +305,11 @@ fn scan_multiline_thenchange_no_brackets_unclosed_error() {
         )],
     );
     let (code, _, stderr) = run_scan(dir.path(), &[]);
-    assert_eq!(code, 1, "unclosed multi-line should fail scan, stderr: {}", stderr);
+    assert_eq!(
+        code, 1,
+        "unclosed multi-line should fail scan, stderr: {}",
+        stderr
+    );
     assert!(
         stderr.contains("Malformed LINT.ThenChange"),
         "stderr: {}",
@@ -320,7 +328,11 @@ fn scan_multiline_thenchange_no_brackets_multiple_pairs() {
         )],
     );
     let (code, _, stderr) = run_scan(dir.path(), &["--no-lint", "-v"]);
-    assert_eq!(code, 0, "multiple pairs should pass scan, stderr: {}", stderr);
+    assert_eq!(
+        code, 0,
+        "multiple pairs should pass scan, stderr: {}",
+        stderr
+    );
     assert!(
         stderr.contains("2 directive pairs"),
         "should detect 2 pairs, stderr: {}",

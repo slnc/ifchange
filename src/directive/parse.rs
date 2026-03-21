@@ -154,15 +154,19 @@ pub fn parse_directives_from_content(
 
                     // If not found and this is a single-line comment, look at subsequent comments
                     if !found_close && comment_lines.len() == 1 {
+                        let mut expected_line = comment.start_line + 1;
                         let mut next_ci = comment_idx + 1;
                         while next_ci < comments.len() {
                             let next_comment = &comments[next_ci];
-                            // Only consume consecutive single-line comments
-                            if next_comment.text.lines().count() != 1 {
+                            // Only consume truly adjacent single-line comments
+                            if next_comment.text.lines().count() != 1
+                                || next_comment.start_line != expected_line
+                            {
                                 break;
                             }
                             accumulated.push(' ');
                             accumulated.push_str(&next_comment.text);
+                            expected_line += 1;
                             if next_comment.text.contains(')') {
                                 next_ci += 1;
                                 found_close = true;
@@ -379,25 +383,23 @@ pub fn parse_directives_from_content(
 }
 
 fn parse_array_targets(inner: &str) -> Vec<String> {
-    static QUOTED: OnceLock<Regex> = OnceLock::new();
-    let re = QUOTED.get_or_init(|| Regex::new(r#"['\"]([^'\"]*)['\"]"#).unwrap());
-    let quoted: Vec<String> = re
-        .captures_iter(inner)
-        .map(|c| c.get(1).unwrap().as_str().to_string())
-        .filter(|s| !s.is_empty())
-        .collect();
-    if !quoted.is_empty() {
-        return quoted;
-    }
-    // Fallback: split on comma for unquoted targets like "foo.txt, bar.txt"
-    if inner.contains(',') {
-        return inner
-            .split(',')
-            .map(|s| s.trim().to_string())
+    if !inner.contains(',') {
+        // Single target: try stripping quotes
+        static QUOTED: OnceLock<Regex> = OnceLock::new();
+        let re = QUOTED.get_or_init(|| Regex::new(r#"['\"]([^'\"]*)['\"]"#).unwrap());
+        return re
+            .captures_iter(inner)
+            .map(|c| c.get(1).unwrap().as_str().to_string())
             .filter(|s| !s.is_empty())
             .collect();
     }
-    Vec::new()
+    // Split on commas, strip quotes from each element.
+    // Handles quoted, unquoted, and mixed lists uniformly.
+    inner
+        .split(',')
+        .map(|s| s.trim().trim_matches(|c| c == '\'' || c == '"').trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect()
 }
 
 #[cfg(test)]
@@ -1030,5 +1032,63 @@ mod bug_tests {
         let content = "/*\nLINT.ThenChange(\nfoo.txt\n)\n*/\n";
         let directives = parse_directives_from_content(content, "x.ts").unwrap();
         assert_eq!(then_targets(directives), vec!["foo.txt"]);
+    }
+
+    // Bug: non-adjacent comments should NOT be consumed by multi-line ThenChange scan.
+    // A blank line or code between comment lines must stop the continuation.
+    #[test]
+    fn thenchange_multiline_non_adjacent_comments_not_consumed() {
+        // Line 1: // LINT.ThenChange(
+        // Line 2: (blank)
+        // Line 3: // )
+        // The blank line breaks adjacency, so the ThenChange( is unclosed.
+        let content = "// LINT.ThenChange(\n\n// )\n";
+        let err = parse_directives_from_content(content, "x.ts").unwrap_err();
+        assert!(
+            err.to_string().contains("Malformed LINT.ThenChange"),
+            "non-adjacent should be malformed, got: {}",
+            err
+        );
+    }
+
+    // Bug: non-adjacent comments with code in between should not be consumed.
+    #[test]
+    fn thenchange_multiline_code_between_comments_not_consumed() {
+        // Line 1: // LINT.ThenChange(
+        // Line 2: const x = 1;
+        // Line 3: // "a.ts"
+        // Line 4: // )
+        let content = "// LINT.ThenChange(\nconst x = 1;\n// \"a.ts\"\n// )\n";
+        let err = parse_directives_from_content(content, "x.ts").unwrap_err();
+        assert!(
+            err.to_string().contains("Malformed LINT.ThenChange"),
+            "code gap should be malformed, got: {}",
+            err
+        );
+    }
+
+    // Bug: mixed quoted and unquoted targets silently drops the unquoted ones.
+    #[test]
+    fn thenchange_mixed_quoted_unquoted_is_malformed() {
+        // "a.ts" is quoted, b.ts is not. Should not silently drop b.ts.
+        let content = "// LINT.ThenChange(\"a.ts\", b.ts)\n";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        let targets = then_targets(directives);
+        // Must include both targets, not just the quoted one
+        assert_eq!(targets.len(), 2, "should have 2 targets, got: {:?}", targets);
+    }
+
+    // Same bug in multi-line form
+    #[test]
+    fn thenchange_multiline_mixed_quoted_unquoted_is_malformed() {
+        let content = "\
+// LINT.ThenChange(
+//   \"a.ts\",
+//   b.ts,
+// )
+";
+        let directives = parse_directives_from_content(content, "x.ts").unwrap();
+        let targets = then_targets(directives);
+        assert_eq!(targets.len(), 2, "should have 2 targets, got: {:?}", targets);
     }
 }
