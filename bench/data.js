@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774081583275,
+  "lastUpdate": 1774083712040,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -2063,6 +2063,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 58769540,
             "range": "± 377806",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "af149f581ecce4cdf63263fe871789890cd3039e",
+          "message": "feat: support multi-line ThenChange (#31)\n\n## Why\nMulti-line `LINT.ThenChange(` spanning consecutive single-line comments\nonly worked with bracket syntax `[...]`. Users want the bracket-free\nstyle:\n```\n// LINT.ThenChange(\n//   'apps/marketplace/app.config.ts#version',\n//   'apps/marketplace/public/version.json',\n//   'apps/marketplace/package.json',\n// )\n```\n\n## What\n- Add fallback path in multi-line accumulation to parse bracket-free\nquoted/unquoted targets via `parse_array_targets`\n- Fix off-by-one in `comment_idx` advancement that skipped directives\nimmediately following a multi-line block\n- Add 15 unit tests covering `//`, `#`, `--` comments, mixed quotes,\nsingle target, close-on-same-line, unclosed errors, and regression for\nexisting bracket syntax\n- Add 4 integration tests for lint engine behavior with multi-line\nThenChange\n\n## Verify\n- [x] All 236 tests pass\n- [x] `just perf` shows no regressions\n- [x] `just check_fix` passes (fmt + clippy clean)",
+          "timestamp": "2026-03-21T09:58:37+01:00",
+          "tree_id": "9621f6d4cb8aec5ddb4ff534a061c6d9ab0d842c",
+          "url": "https://github.com/slnc/ifchange/commit/af149f581ecce4cdf63263fe871789890cd3039e"
+        },
+        "date": 1774083711747,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4252579,
+            "range": "± 44451",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7559566,
+            "range": "± 61651",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 37631872,
+            "range": "± 1963306",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 58865037,
+            "range": "± 416719",
             "unit": "ns/iter"
           }
         ]
