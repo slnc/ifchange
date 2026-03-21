@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774079972341,
+  "lastUpdate": 1774081583275,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -2015,6 +2015,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 60310546,
             "range": "± 1121857",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8bcb8bf3e37be058dd861551a745712db3fc8c04",
+          "message": "feat: add go.mod support (#30)\n\n## Summary\n- Add `go.mod` as a recognized special filename with `//` line-only\ncomment support\n- Include README in PyPI and npm packages\n\n## What\n- Handle `go.mod` in `effective_extension()` (same pattern as\nDockerfile)\n- Add to `C_LINE_ONLY_EXTS` so only `//` comments are recognized (no `/*\n*/`)\n- Update README supported-languages special files list\n- Copy README into pypi/ for PyPI package distribution\n- Remove `go.sum` support: go.sum files don't support comments\n\n## Test plan\n- [x] Unit tests for comment extraction, directive parsing,\neffective_extension\n- [x] Full test suite passes (146 unit + 115 integration)\n- [x] `cargo fmt` + `cargo clippy` clean",
+          "timestamp": "2026-03-21T09:22:53+01:00",
+          "tree_id": "6c3d5d08be0cc127f7acb70512eed642cf541f85",
+          "url": "https://github.com/slnc/ifchange/commit/8bcb8bf3e37be058dd861551a745712db3fc8c04"
+        },
+        "date": 1774081582483,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4423359,
+            "range": "± 27495",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7486070,
+            "range": "± 46336",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 37148729,
+            "range": "± 1649810",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 58769540,
+            "range": "± 377806",
             "unit": "ns/iter"
           }
         ]
