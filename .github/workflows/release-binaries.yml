@@ -402,19 +402,24 @@ jobs:
             "@slnc/ifchange-darwin-arm64"
             "@slnc/ifchange-win32-x64"
           )
+          pids=()
           for pkg in "${PACKAGES[@]}"; do
-            echo "Waiting for $pkg@$VERSION..."
-            for i in $(seq 1 60); do
-              if npm view "$pkg@$VERSION" version 2>/dev/null | grep -q "$VERSION"; then
-                echo "$pkg@$VERSION is available"
-                break
-              fi
-              if [ "$i" = "60" ]; then
-                echo "::error::Timed out waiting for $pkg@$VERSION on registry"
-                exit 1
-              fi
-              sleep 10
-            done
+            (
+              echo "Waiting for $pkg@$VERSION..."
+              for i in $(seq 1 60); do
+                if npm view "$pkg@$VERSION" version 2>/dev/null | grep -q "$VERSION"; then
+                  echo "$pkg@$VERSION is available"
+                  exit 0
+                fi
+                sleep 10
+              done
+              echo "::error::Timed out waiting for $pkg@$VERSION on registry"
+              exit 1
+            ) &
+            pids+=($!)
+          done
+          for pid in "${pids[@]}"; do
+            wait "$pid" || exit 1
           done
 
       - name: Publish main package

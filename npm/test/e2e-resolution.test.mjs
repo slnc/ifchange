@@ -28,7 +28,7 @@ const PLATFORM_MAP = {
   "win32-x64": { dir: "ifchange-win32-x64", scope: "@slnc/ifchange-win32-x64" },
 };
 
-const platformKey = `${process.platform}-${os.arch()}`;
+const platformKey = `${process.platform}-${process.arch}`;
 const platformInfo = PLATFORM_MAP[platformKey];
 
 // Skip if unsupported platform
