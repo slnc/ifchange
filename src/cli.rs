@@ -537,19 +537,15 @@ fn run_scan(dir: &str, verbose: bool, debug: bool, repo_root: &std::path::Path) 
         let files = file_count.load(Ordering::Relaxed);
         let pairs = directive_pair_count.load(Ordering::Relaxed);
         let labels = label_count.load(Ordering::Relaxed);
-        let mut parts = vec![format!(
-            "Scan summary: {} files walked ({} with directives), {} directive {}",
+        let header = format!(
+            "Scan summary: {} files walked ({} with directives), {} directive {}, {} {}",
             walked_count,
             files,
             pairs,
             if pairs == 1 { "pair" } else { "pairs" },
-        )];
-        parts.push(format!(
-            "{} {}",
             labels,
-            if labels == 1 { "label" } else { "labels" }
-        ));
-        let header = parts.join(", ");
+            if labels == 1 { "label" } else { "labels" },
+        );
 
         if !verbose_lines.is_empty() {
             eprintln!("{}", dim("Files with directives:"));
