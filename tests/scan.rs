@@ -659,6 +659,42 @@ fn scan_self_reference_label_missing_fails() {
     );
 }
 
+// ── Target file read/parse failure surfaced as error ──
+
+#[test]
+fn scan_target_outside_tree_with_broken_directives_reports_error() {
+    // Target file is outside the scan tree and has malformed directives.
+    // The scan should surface the parse error instead of silently skipping
+    // label validation.
+    let dir = TempDir::new().unwrap();
+    write_files(
+        dir.path(),
+        &[
+            (
+                "src/a.py",
+                "# LINT.IfChange\nvalue = 1\n# LINT.ThenChange(\"../shared/b.py#section\")\n",
+            ),
+            (
+                "shared/b.py",
+                "# LINT.Label(\"section\")\nstuff\n# LINT.ThenChange(\n",
+            ),
+        ],
+    );
+    // Only scan the src/ subdirectory; shared/b.py is outside the walk tree
+    let scan_dir = dir.path().join("src");
+    let (code, _, stderr) = run_scan(&scan_dir, &["--no-lint"]);
+    assert_eq!(
+        code, 1,
+        "scan should fail when target outside tree has broken directives, stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("b.py"),
+        "error should mention the problematic target, stderr: {}",
+        stderr
+    );
+}
+
 // ── Directory target with multi-line ThenChange ──
 
 #[test]

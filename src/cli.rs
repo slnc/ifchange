@@ -177,7 +177,7 @@ fn run_inner(
     let mut exit_code = 0;
     let mut scan_errors = 0usize;
     let mut lint_errors = 0usize;
-    // Scan phase: validate directive syntax across a directory.
+
     if !cli.no_scan {
         let scan_dir = cli.scan.as_deref().unwrap_or(".");
         let scan_root = if cli.scan.is_some() {
@@ -196,117 +196,143 @@ fn run_inner(
         exit_code = exit_code.max(scan_exit);
     }
 
-    // Lint phase: validate cross-file dependencies from a diff.
     if !cli.no_lint {
-        let diff_text = match cli.diff_file.as_deref() {
-            Some(path) if path != "-" => match std::fs::read_to_string(path) {
-                Ok(content) => content,
-                Err(e) => {
-                    eprintln!("{} {}", red("Error:"), e);
-                    return 2;
-                }
-            },
-            _ => {
-                let mut buf = String::new();
-                if let Err(e) = std::io::stdin().read_to_string(&mut buf) {
-                    eprintln!("{} reading stdin: {}", red("Error:"), e);
-                    return 2;
-                }
-                buf
-            }
+        let (lint_exit, lint_err_count) = match run_lint_phase(&cli, verbose, debug, repo_root) {
+            Ok(result) => result,
+            Err(fatal) => return fatal,
         };
-
-        // Validate diff input
-        let trimmed = diff_text.trim();
-        if !trimmed.is_empty() {
-            let changes = parse_changed_lines(&diff_text);
-            if changes.is_empty() {
-                let has_valid = trimmed.contains("---")
-                    || trimmed.contains("diff --git")
-                    || trimmed.contains("index ");
-                if !has_valid {
-                    let snippet: String = trimmed.chars().take(100).collect();
-                    let snippet = snippet.replace('\n', "\\n");
-                    eprintln!(
-                        "{} Invalid diff input: no file changes detected (snippet: \"{}...\")",
-                        red("Error:"),
-                        snippet
-                    );
-                    return 2;
-                }
-            }
-        }
-
-        let result = lint_diff(&diff_text, verbose, debug, &cli.ignore, repo_root);
-
-        lint_errors = result.messages.len();
-
-        // Verbose: lint header
-        if verbose {
-            eprintln!();
-            if debug {
-                eprintln!();
-            }
-            let header = if result.files_checked > 0 {
-                format!(
-                    "Lint summary: {} {} checked, {} {} in diff",
-                    result.files_checked,
-                    if result.files_checked == 1 {
-                        "file"
-                    } else {
-                        "files"
-                    },
-                    result.pairs_checked,
-                    if result.pairs_checked == 1 {
-                        "pair"
-                    } else {
-                        "pairs"
-                    },
-                )
-            } else {
-                format!(
-                    "Lint summary: {} {} in diff",
-                    result.pairs_checked,
-                    if result.pairs_checked == 1 {
-                        "pair"
-                    } else {
-                        "pairs"
-                    },
-                )
-            };
-            if lint_errors > 0 {
-                let error_part = format!(
-                    ", {} {}",
-                    lint_errors,
-                    if lint_errors == 1 { "error" } else { "errors" },
-                );
-                eprintln!("{}{}", dim(&header), red(&error_part));
-            } else {
-                eprintln!("{}", dim(&header));
-            }
-
-            for msg in &result.verbose_messages {
-                eprintln!("{}", dim(msg));
-            }
-        }
-
-        // Errors at column 0
-        if verbose && !result.messages.is_empty() {
-            eprintln!();
-        }
-        for msg in &result.messages {
-            eprintln!("{}", red(msg));
-        }
-
-        let lint_exit = if cli.warn && result.exit_code == 1 {
-            0
-        } else {
-            result.exit_code
-        };
+        lint_errors = lint_err_count;
         exit_code = exit_code.max(lint_exit);
     }
 
-    // Final error summary line
+    print_error_summary(scan_errors, lint_errors);
+    exit_code
+}
+
+/// Read diff text from a file path or stdin.
+fn read_diff(diff_file: Option<&str>) -> Result<String, i32> {
+    match diff_file {
+        Some(path) if path != "-" => std::fs::read_to_string(path).map_err(|e| {
+            eprintln!("{} {}", red("Error:"), e);
+            2
+        }),
+        _ => {
+            let mut buf = String::new();
+            std::io::stdin().read_to_string(&mut buf).map_err(|e| {
+                eprintln!("{} reading stdin: {}", red("Error:"), e);
+                2
+            })?;
+            Ok(buf)
+        }
+    }
+}
+
+/// Validate that diff text looks like a real unified diff.
+fn validate_diff(diff_text: &str) -> Result<(), i32> {
+    let trimmed = diff_text.trim();
+    if trimmed.is_empty() {
+        return Ok(());
+    }
+    let changes = parse_changed_lines(diff_text);
+    if changes.is_empty() {
+        let has_valid =
+            trimmed.contains("---") || trimmed.contains("diff --git") || trimmed.contains("index ");
+        if !has_valid {
+            let snippet: String = trimmed.chars().take(100).collect();
+            let snippet = snippet.replace('\n', "\\n");
+            eprintln!(
+                "{} Invalid diff input: no file changes detected (snippet: \"{}...\")",
+                red("Error:"),
+                snippet
+            );
+            return Err(2);
+        }
+    }
+    Ok(())
+}
+
+/// Run the lint phase: read diff, validate, lint, and print results.
+/// Returns `Ok((exit_code, error_count))` or `Err(fatal_exit_code)`.
+fn run_lint_phase(
+    cli: &Cli,
+    verbose: bool,
+    debug: bool,
+    repo_root: &std::path::Path,
+) -> Result<(i32, usize), i32> {
+    let diff_text = read_diff(cli.diff_file.as_deref())?;
+    validate_diff(&diff_text)?;
+
+    let result = lint_diff(&diff_text, verbose, debug, &cli.ignore, repo_root);
+    let lint_errors = result.messages.len();
+
+    if verbose {
+        print_lint_summary(&result, lint_errors, debug);
+    }
+
+    if verbose && !result.messages.is_empty() {
+        eprintln!();
+    }
+    for msg in &result.messages {
+        eprintln!("{}", red(msg));
+    }
+
+    let exit = if cli.warn && result.exit_code == 1 {
+        0
+    } else {
+        result.exit_code
+    };
+    Ok((exit, lint_errors))
+}
+
+fn print_lint_summary(result: &crate::model::LintResult, lint_errors: usize, debug: bool) {
+    eprintln!();
+    if debug {
+        eprintln!();
+    }
+    let header = if result.files_checked > 0 {
+        format!(
+            "Lint summary: {} {} checked, {} {} in diff",
+            result.files_checked,
+            if result.files_checked == 1 {
+                "file"
+            } else {
+                "files"
+            },
+            result.pairs_checked,
+            if result.pairs_checked == 1 {
+                "pair"
+            } else {
+                "pairs"
+            },
+        )
+    } else {
+        format!(
+            "Lint summary: {} {} in diff",
+            result.pairs_checked,
+            if result.pairs_checked == 1 {
+                "pair"
+            } else {
+                "pairs"
+            },
+        )
+    };
+    if lint_errors > 0 {
+        let error_part = format!(
+            ", {} {}",
+            lint_errors,
+            if lint_errors == 1 { "error" } else { "errors" },
+        );
+        eprintln!("{}{}", dim(&header), red(&error_part));
+    } else {
+        eprintln!("{}", dim(&header));
+    }
+
+    for msg in &result.verbose_messages {
+        eprintln!("{}", dim(msg));
+    }
+}
+
+fn print_error_summary(scan_errors: usize, lint_errors: usize) {
     let total_errors = scan_errors + lint_errors;
     if total_errors > 0 {
         let mut parts: Vec<String> = Vec::new();
@@ -326,8 +352,6 @@ fn run_inner(
             ))
         );
     }
-
-    exit_code
 }
 
 fn validate_thenchange_targets(
@@ -341,8 +365,10 @@ fn validate_thenchange_targets(
     let mut errors = Vec::new();
     // Cache parsed target files to avoid N+1 reads when multiple directives
     // reference labels in the same file.
-    let mut target_cache: HashMap<std::path::PathBuf, Option<Vec<crate::model::Directive>>> =
-        HashMap::new();
+    let mut target_cache: HashMap<
+        std::path::PathBuf,
+        Result<Vec<crate::model::Directive>, String>,
+    > = HashMap::new();
 
     for d in directives {
         if let crate::model::Directive::ThenChange { line, target } = d {
@@ -394,24 +420,39 @@ fn validate_thenchange_targets(
                 // File exists, check if the referenced label exists in target.
                 // Use cache to avoid re-reading the same file for multiple label refs.
                 let target_directives = target_cache.entry(resolved.clone()).or_insert_with(|| {
-                    let resolved_str = resolved.to_string_lossy();
-                    std::fs::read_to_string(&resolved).ok().and_then(|content| {
-                        parse_directives_from_content(&content, &resolved_str).ok()
-                    })
+                    let resolved_str = resolved.to_string_lossy().into_owned();
+                    std::fs::read_to_string(&resolved)
+                        .map_err(|e| {
+                            format!(
+                                "error: {}:{}: failed to read '{}': {}",
+                                file_path, line, target_name, e
+                            )
+                        })
+                        .and_then(|content| {
+                            parse_directives_from_content(&content, &resolved_str).map_err(|e| {
+                                format!(
+                                    "error: {}:{}: failed to parse '{}': {}",
+                                    file_path, line, target_name, e
+                                )
+                            })
+                        })
                 });
-                if let Some(ref tds) = target_directives {
-                    if !directives_have_label(tds, label_name) {
-                        let available = collect_label_names(tds);
-                        let avail_str = if available.is_empty() {
-                            "none".to_string()
-                        } else {
-                            available.join(", ")
-                        };
-                        errors.push(format!(
-                            "error: {}:{}: label '{}' not found in '{}' (available: {})",
-                            file_path, line, label_name, target_name, avail_str
-                        ));
+                match target_directives {
+                    Ok(ref tds) => {
+                        if !directives_have_label(tds, label_name) {
+                            let available = collect_label_names(tds);
+                            let avail_str = if available.is_empty() {
+                                "none".to_string()
+                            } else {
+                                available.join(", ")
+                            };
+                            errors.push(format!(
+                                "error: {}:{}: label '{}' not found in '{}' (available: {})",
+                                file_path, line, label_name, target_name, avail_str
+                            ));
+                        }
                     }
+                    Err(err) => errors.push(err.clone()),
                 }
             }
         }
