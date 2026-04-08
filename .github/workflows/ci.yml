@@ -49,7 +49,7 @@ jobs:
         with:
           node-version: '24'
 
-      - uses: taiki-e/install-action@2ab0b06ae5316f5b7822284d7ba0ba8093db8472 # just
+      - uses: taiki-e/install-action@7c918e486f4a18284b47a7f0718a1816a897706b # just
         with:
           tool: just
 
@@ -75,12 +75,12 @@ jobs:
           rustup component add rust-src rustc-dev llvm-tools-preview --toolchain nightly
 
       - name: Install cargo-machete
-        uses: taiki-e/install-action@220511263323e8667cdc67fb71831a29e3ca27a1 # cargo-machete
+        uses: taiki-e/install-action@68f3344b4246e8381afe2c161fd15efa0cbfbd66 # cargo-machete
         with:
           tool: cargo-machete
 
       - name: Install cargo-udeps
-        uses: taiki-e/install-action@be536a1f7f0f68ae7f85b7d729819e75d3b36667 # cargo-udeps
+        uses: taiki-e/install-action@bb8b1bac045647fa8c87711be1f5b9a84d81086a # cargo-udeps
         with:
           tool: cargo-udeps
 
@@ -137,7 +137,7 @@ jobs:
           fetch-depth: 0
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7
+        uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -181,7 +181,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install cargo-audit
-        uses: taiki-e/install-action@af0933f407b5f4a1e76d0a0cb90177138622f34a # cargo-audit
+        uses: taiki-e/install-action@c2eca42f131dcb54826dc4165d271d34154a5641 # cargo-audit
         with:
           tool: cargo-audit
 
@@ -203,7 +203,7 @@ jobs:
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@c92986c260e4cef66c5a0ca770af92552fa8049a # cargo-llvm-cov
+        uses: taiki-e/install-action@67ba421220842957ca0cd55182d4b2cf3e7c0614 # cargo-llvm-cov
         with:
           tool: cargo-llvm-cov
 
