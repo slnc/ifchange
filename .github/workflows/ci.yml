@@ -45,11 +45,11 @@ jobs:
 
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: '24'
 
-      - uses: taiki-e/install-action@7c918e486f4a18284b47a7f0718a1816a897706b # just
+      - uses: taiki-e/install-action@9ed832ec9b05207a87c28eab74dbfb661ff969d3 # just
         with:
           tool: just
 
@@ -75,12 +75,12 @@ jobs:
           rustup component add rust-src rustc-dev llvm-tools-preview --toolchain nightly
 
       - name: Install cargo-machete
-        uses: taiki-e/install-action@68f3344b4246e8381afe2c161fd15efa0cbfbd66 # cargo-machete
+        uses: taiki-e/install-action@11706c4fa057f0949e593c636f1d948f143d3eb1 # cargo-machete
         with:
           tool: cargo-machete
 
       - name: Install cargo-udeps
-        uses: taiki-e/install-action@bb8b1bac045647fa8c87711be1f5b9a84d81086a # cargo-udeps
+        uses: taiki-e/install-action@f212ee79f9324d678b0d9270422b8800f0a3f002 # cargo-udeps
         with:
           tool: cargo-udeps
 
@@ -117,7 +117,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: '24'
 
@@ -137,7 +137,7 @@ jobs:
           fetch-depth: 0
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7
+        uses: SonarSource/sonarqube-scan-action@55e44800a8f495208cce6e4e82f5dedb45fcf0ef # v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -181,7 +181,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install cargo-audit
-        uses: taiki-e/install-action@c2eca42f131dcb54826dc4165d271d34154a5641 # cargo-audit
+        uses: taiki-e/install-action@3727a22028e8880324c709d651489ab3b1360e13 # cargo-audit
         with:
           tool: cargo-audit
 
@@ -203,7 +203,7 @@ jobs:
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@67ba421220842957ca0cd55182d4b2cf3e7c0614 # cargo-llvm-cov
+        uses: taiki-e/install-action@ff869c26e4a7acc3087d9d6c1163a80d3957bca7 # cargo-llvm-cov
         with:
           tool: cargo-llvm-cov
 
