@@ -49,7 +49,7 @@ jobs:
         with:
           node-version: '24'
 
-      - uses: taiki-e/install-action@f7e9f60cbb6fd0974db97e1044fe80439a7d98a5 # just
+      - uses: taiki-e/install-action@ea85faa6acd705ad6d40586db99f1a70b09c2929 # just
         with:
           tool: just
 
@@ -75,12 +75,12 @@ jobs:
           rustup component add rust-src rustc-dev llvm-tools-preview --toolchain nightly
 
       - name: Install cargo-machete
-        uses: taiki-e/install-action@d4c2ca7660e25ec0bb6ef4422b6c623acab477cd # cargo-machete
+        uses: taiki-e/install-action@d6b20027cf9855c62d123264e9b666cc5dd73b19 # cargo-machete
         with:
           tool: cargo-machete
 
       - name: Install cargo-udeps
-        uses: taiki-e/install-action@c883cf2e122b1a3caf2f74c7aa62527685828fde # cargo-udeps
+        uses: taiki-e/install-action@71c7db9362a5b16f046b8df34ae2c654b1575139 # cargo-udeps
         with:
           tool: cargo-udeps
 
@@ -181,7 +181,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install cargo-audit
-        uses: taiki-e/install-action@94cf54928bb4181ff5cb48ff27304503c9db4050 # cargo-audit
+        uses: taiki-e/install-action@f7ae479469b4c4fb5c1818615346605e61b5dc27 # cargo-audit
         with:
           tool: cargo-audit
 
@@ -203,7 +203,7 @@ jobs:
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@1c95de87e1be659ee8db85275ffcf7b0ddaf320b # cargo-llvm-cov
+        uses: taiki-e/install-action@db5f2b269964e5b65b66c95c5abab5f79a135fc3 # cargo-llvm-cov
         with:
           tool: cargo-llvm-cov
 
