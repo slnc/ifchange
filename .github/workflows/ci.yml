@@ -49,7 +49,7 @@ jobs:
         with:
           node-version: '24'
 
-      - uses: taiki-e/install-action@ea85faa6acd705ad6d40586db99f1a70b09c2929 # just
+      - uses: taiki-e/install-action@a34f91312b9b3bd31adbf6210462a2408a34ea57 # just
         with:
           tool: just
 
@@ -75,12 +75,12 @@ jobs:
           rustup component add rust-src rustc-dev llvm-tools-preview --toolchain nightly
 
       - name: Install cargo-machete
-        uses: taiki-e/install-action@d6b20027cf9855c62d123264e9b666cc5dd73b19 # cargo-machete
+        uses: taiki-e/install-action@e11970a87e21e461b0f3b10b232ca2c8daea28cf # cargo-machete
         with:
           tool: cargo-machete
 
       - name: Install cargo-udeps
-        uses: taiki-e/install-action@71c7db9362a5b16f046b8df34ae2c654b1575139 # cargo-udeps
+        uses: taiki-e/install-action@98fe170fdbdad646f6a5a9b40fdbc6c6f32ec91c # cargo-udeps
         with:
           tool: cargo-udeps
 
@@ -137,7 +137,7 @@ jobs:
           fetch-depth: 0
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432 # v8
+        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -181,7 +181,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install cargo-audit
-        uses: taiki-e/install-action@f7ae479469b4c4fb5c1818615346605e61b5dc27 # cargo-audit
+        uses: taiki-e/install-action@cb5990a7e689fed1ff4a7f2d4814a8b1e55d9c72 # cargo-audit
         with:
           tool: cargo-audit
 
@@ -203,7 +203,7 @@ jobs:
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@db5f2b269964e5b65b66c95c5abab5f79a135fc3 # cargo-llvm-cov
+        uses: taiki-e/install-action@1c8b31c789a32dbd86b9e9832f3192286858bd21 # cargo-llvm-cov
         with:
           tool: cargo-llvm-cov
 
@@ -211,7 +211,7 @@ jobs:
         run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
 
       - name: Upload to Codecov
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
         with:
           files: lcov.info
           fail_ci_if_error: true
