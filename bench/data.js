@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781086005842,
+  "lastUpdate": 1784256936371,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -2687,6 +2687,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 58418715,
             "range": "± 436230",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "264827662+slnc-renovate-ci[bot]@users.noreply.github.com",
+            "name": "slnc-renovate-ci[bot]",
+            "username": "slnc-renovate-ci[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bd8ec2cb3f1b40bbb48da06985d2924aaa9ef1d7",
+          "message": "chore(deps): update all non-security dependencies to v7 (#47)\n\nThis PR contains the following updates:\n\n| Package | Type | Update | Change |\n|---|---|---|---|\n| [actions/checkout](https://redirect.github.com/actions/checkout) |\naction | major | `v6` → `v7` |\n|\n[codecov/codecov-action](https://redirect.github.com/codecov/codecov-action)\n| action | major | `v6` → `v7` |\n\n---\n\n> [!WARNING]\n> Some dependencies could not be looked up. Check the warning logs for\nmore information.\n\n---\n\n### Release Notes\n\n<details>\n<summary>actions/checkout (actions/checkout)</summary>\n\n###\n[`v7.0.0`](https://redirect.github.com/actions/checkout/blob/HEAD/CHANGELOG.md#v700)\n\n[Compare\nSource](https://redirect.github.com/actions/checkout/compare/v7.0.0...v7.0.0)\n\n- Block checking out fork PR for pull\\_request\\_target and workflow\\_run\nby [@&#8203;aiqiaoy](https://redirect.github.com/aiqiaoy) in\n[#&#8203;2454](https://redirect.github.com/actions/checkout/pull/2454)\n- Bump actions/publish-immutable-action from 0.0.3 to 0.0.4 in the\nminor-actions-dependencies group across 1 directory by\n[@&#8203;dependabot](https://redirect.github.com/dependabot)\\[bot] in\n[#&#8203;2458](https://redirect.github.com/actions/checkout/pull/2458)\n- Bump flatted from 3.3.1 to 3.4.2 by\n[@&#8203;dependabot](https://redirect.github.com/dependabot)\\[bot] in\n[#&#8203;2460](https://redirect.github.com/actions/checkout/pull/2460)\n- Bump js-yaml from 4.1.0 to 4.2.0 by\n[@&#8203;dependabot](https://redirect.github.com/dependabot)\\[bot] in\n[#&#8203;2461](https://redirect.github.com/actions/checkout/pull/2461)\n- Bump [@&#8203;actions/core](https://redirect.github.com/actions/core)\nand\n[@&#8203;actions/tool-cache](https://redirect.github.com/actions/tool-cache)\nand Remove uuid by\n[@&#8203;dependabot](https://redirect.github.com/dependabot)\\[bot] in\n[#&#8203;2459](https://redirect.github.com/actions/checkout/pull/2459)\n- upgrade module to esm and update dependencies by\n[@&#8203;aiqiaoy](https://redirect.github.com/aiqiaoy) in\n[#&#8203;2463](https://redirect.github.com/actions/checkout/pull/2463)\n- Bump the minor-npm-dependencies group across 1 directory with 3\nupdates by\n[@&#8203;dependabot](https://redirect.github.com/dependabot)\\[bot] in\n[#&#8203;2462](https://redirect.github.com/actions/checkout/pull/2462)\n\n###\n[`v7`](https://redirect.github.com/actions/checkout/blob/HEAD/CHANGELOG.md#v700)\n\n[Compare\nSource](https://redirect.github.com/actions/checkout/compare/v6.0.3...v7.0.0)\n\n- Block checking out fork PR for pull\\_request\\_target and workflow\\_run\nby [@&#8203;aiqiaoy](https://redirect.github.com/aiqiaoy) in\n[#&#8203;2454](https://redirect.github.com/actions/checkout/pull/2454)\n- Bump actions/publish-immutable-action from 0.0.3 to 0.0.4 in the\nminor-actions-dependencies group across 1 directory by\n[@&#8203;dependabot](https://redirect.github.com/dependabot)\\[bot] in\n[#&#8203;2458](https://redirect.github.com/actions/checkout/pull/2458)\n- Bump flatted from 3.3.1 to 3.4.2 by\n[@&#8203;dependabot](https://redirect.github.com/dependabot)\\[bot] in\n[#&#8203;2460](https://redirect.github.com/actions/checkout/pull/2460)\n- Bump js-yaml from 4.1.0 to 4.2.0 by\n[@&#8203;dependabot](https://redirect.github.com/dependabot)\\[bot] in\n[#&#8203;2461](https://redirect.github.com/actions/checkout/pull/2461)\n- Bump [@&#8203;actions/core](https://redirect.github.com/actions/core)\nand\n[@&#8203;actions/tool-cache](https://redirect.github.com/actions/tool-cache)\nand Remove uuid by\n[@&#8203;dependabot](https://redirect.github.com/dependabot)\\[bot] in\n[#&#8203;2459](https://redirect.github.com/actions/checkout/pull/2459)\n- upgrade module to esm and update dependencies by\n[@&#8203;aiqiaoy](https://redirect.github.com/aiqiaoy) in\n[#&#8203;2463](https://redirect.github.com/actions/checkout/pull/2463)\n- Bump the minor-npm-dependencies group across 1 directory with 3\nupdates by\n[@&#8203;dependabot](https://redirect.github.com/dependabot)\\[bot] in\n[#&#8203;2462](https://redirect.github.com/actions/checkout/pull/2462)\n\n</details>\n\n<details>\n<summary>codecov/codecov-action (codecov/codecov-action)</summary>\n\n###\n[`v7.0.0`](https://redirect.github.com/codecov/codecov-action/releases/tag/v7.0.0)\n\n[Compare\nSource](https://redirect.github.com/codecov/codecov-action/compare/v7.0.0...v7.0.0)\n\n⚠️ Due to migration issues with keybase, we are unable to update our\nkeys under the `codecovsecurity` account. We have deleted the account\nand are using `codecovsecops` with the original gpg key\n\n#### What's Changed\n\n- ci: remove Enforce License Compliance workflow by\n[@&#8203;thomasrockhu-codecov](https://redirect.github.com/thomasrockhu-codecov)\nin\n[#&#8203;1950](https://redirect.github.com/codecov/codecov-action/pull/1950)\n- chore(release): 7.0.0 by\n[@&#8203;thomasrockhu-codecov](https://redirect.github.com/thomasrockhu-codecov)\nin\n[#&#8203;1957](https://redirect.github.com/codecov/codecov-action/pull/1957)\n\n**Full Changelog**:\n<https://github.com/codecov/codecov-action/compare/v6.0.1...v7.0.0>\n\n###\n[`v7`](https://redirect.github.com/codecov/codecov-action/compare/v6.0.2...v7.0.0)\n\n[Compare\nSource](https://redirect.github.com/codecov/codecov-action/compare/v6.0.2...v7.0.0)\n\n</details>\n\n---\n\n### Configuration\n\n📅 **Schedule**: (in timezone UTC)\n\n- Branch creation\n  - \"on monday\"\n- Automerge\n  - At any time (no schedule defined)\n\n🚦 **Automerge**: Disabled by config. Please merge this manually once you\nare satisfied.\n\n♻ **Rebasing**: Whenever PR is behind base branch, or you tick the\nrebase/retry checkbox.\n\n🔕 **Ignore**: Close this PR and you won't be reminded about these\nupdates again.\n\n---\n\n- [ ] <!-- rebase-check -->If you want to rebase/retry this PR, check\nthis box\n\n---\n\nThis PR has been generated by [Mend\nRenovate](https://redirect.github.com/renovatebot/renovate).\n\n<!--renovate-debug:eyJjcmVhdGVkSW5WZXIiOiI0My4yMjMuMCIsInVwZGF0ZWRJblZlciI6IjQzLjIzNi4wIiwidGFyZ2V0QnJhbmNoIjoibWFpbiIsImxhYmVscyI6W119-->\n\nCo-authored-by: slnc-renovate-ci[bot] <264827662+slnc-renovate-ci[bot]@users.noreply.github.com>",
+          "timestamp": "2026-07-17T04:53:01+02:00",
+          "tree_id": "91163b82e8476ff78e0b3a9a4b482e851d891730",
+          "url": "https://github.com/slnc/ifchange/commit/bd8ec2cb3f1b40bbb48da06985d2924aaa9ef1d7"
+        },
+        "date": 1784256935430,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4334439,
+            "range": "± 73658",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7023376,
+            "range": "± 288379",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 38050617,
+            "range": "± 2474597",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 55418100,
+            "range": "± 949570",
             "unit": "ns/iter"
           }
         ]
