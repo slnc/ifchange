@@ -62,7 +62,7 @@ jobs:
           ref: ${{ needs.resolve-tag.outputs.tag }}
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+        uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
         with:
           toolchain: stable
           targets: ${{ matrix.target }}
@@ -220,7 +220,7 @@ jobs:
           output-file: ./dist/sbom.spdx.json
 
       - name: Publish release assets
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ needs.resolve-tag.outputs.tag }}
           generate_release_notes: false
@@ -273,12 +273,12 @@ jobs:
           ref: ${{ needs.resolve-tag.outputs.tag }}
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+        uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
         with:
           toolchain: stable
 
       - name: Authenticate with crates.io
-        uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
         id: auth
 
       - name: Publish to crates.io
@@ -300,7 +300,7 @@ jobs:
           ref: ${{ needs.resolve-tag.outputs.tag }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
@@ -444,7 +444,7 @@ jobs:
           ref: ${{ needs.resolve-tag.outputs.tag }}
 
       - name: Setup Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.14'
 
