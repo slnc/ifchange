@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784256936371,
+  "lastUpdate": 1785352974136,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -2735,6 +2735,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 55418100,
             "range": "± 949570",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cd7efd7d0fde568d47b8121324fa2a2d4dc12cd8",
+          "message": "fix(deps): bump crossbeam-epoch and anyhow to clear RUSTSEC advisories (#49)\n\n## Problem\n\nThe `Security audit` CI job (`cargo audit`) fails on `main` and\ntherefore on every open PR, including the Renovate PRs #46 and #48.\nBecause `cargo audit` fetches the advisory DB live, this started failing\nwithout any code change on our side.\n\nReproduced locally on the current `main`:\n\n- **RUSTSEC-2026-0204** - `crossbeam-epoch` 0.9.18, invalid pointer\ndereference in the `fmt::Pointer` impl for `Atomic`/`Shared`. Classed as\na *vulnerability*, so it fails the job. Requires `>=0.9.20`.\n- **RUSTSEC-2026-0190** - `anyhow` 1.0.102, unsoundness in\n`Error::downcast_mut()`. Only a warning, non-fatal, but cleared here\ntoo.\n\nBoth crates are transitive-only (`crossbeam-epoch` via `ignore` and\n`rayon`), so no manifest change is needed.\n\n## Change\n\nLockfile-only bumps:\n\n- `crossbeam-epoch` 0.9.18 -> 0.9.20\n- `anyhow` 1.0.102 -> 1.0.104\n\n## Verification\n\n- `cargo audit` - clean, no vulnerabilities and no warnings\n- `cargo fmt --check` - clean\n- `cargo clippy --all-targets --all-features -- -D warnings` - clean\n- `cargo test` - 39 passed, 0 failed\n\n## Note\n\nThis unblocks #46 and #48, whose `Security audit` failures were caused\nby this and not by anything in those PRs (both only change GitHub\nActions pin SHAs).",
+          "timestamp": "2026-07-29T21:20:43+02:00",
+          "tree_id": "effb058ee99431ecb81141722676cb1c43bcab3b",
+          "url": "https://github.com/slnc/ifchange/commit/cd7efd7d0fde568d47b8121324fa2a2d4dc12cd8"
+        },
+        "date": 1785352973307,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4353126,
+            "range": "± 37815",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7043682,
+            "range": "± 103767",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 36731714,
+            "range": "± 1554300",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 52543736,
+            "range": "± 642534",
             "unit": "ns/iter"
           }
         ]
