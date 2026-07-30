@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785383783397,
+  "lastUpdate": 1785384034729,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -2879,6 +2879,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 63551213,
             "range": "± 467636",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "264827662+slnc-renovate-ci[bot]@users.noreply.github.com",
+            "name": "slnc-renovate-ci[bot]",
+            "username": "slnc-renovate-ci[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fae9d44ce2c85ec7620532a313d6a0d9b2f0c8f6",
+          "message": "chore(main): release 0.3.1 (#50)\n\n## [0.3.1](https://github.com/slnc/ifchange/compare/v0.3.0...v0.3.1)\n(2026-07-29)\n\n\n### Bug Fixes\n\n* **deps:** bump crossbeam-epoch and anyhow to clear RUSTSEC advisories\n([#49](https://github.com/slnc/ifchange/issues/49))\n([cd7efd7](https://github.com/slnc/ifchange/commit/cd7efd7d0fde568d47b8121324fa2a2d4dc12cd8))\n\n---\nThis PR was generated with [Release\nPlease](https://github.com/googleapis/release-please). See\n[documentation](https://github.com/googleapis/release-please#release-please).\n\nCo-authored-by: slnc-renovate-ci[bot] <264827662+slnc-renovate-ci[bot]@users.noreply.github.com>\nCo-authored-by: slnc <69429+slnc@users.noreply.github.com>",
+          "timestamp": "2026-07-30T03:58:41Z",
+          "tree_id": "1f4fc30c0d053abd3d40285f396ac7907ab598d6",
+          "url": "https://github.com/slnc/ifchange/commit/fae9d44ce2c85ec7620532a313d6a0d9b2f0c8f6"
+        },
+        "date": 1785384034442,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4394485,
+            "range": "± 64540",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7026518,
+            "range": "± 458482",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 37731407,
+            "range": "± 1257941",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 55159028,
+            "range": "± 345957",
             "unit": "ns/iter"
           }
         ]
