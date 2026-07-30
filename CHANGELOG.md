@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/slnc/ifchange/compare/v0.3.0...v0.3.1) (2026-07-30)
+
+
+### Bug Fixes
+
+* **deps:** bump crossbeam-epoch and anyhow to clear RUSTSEC advisories ([#49](https://github.com/slnc/ifchange/issues/49)) ([cd7efd7](https://github.com/slnc/ifchange/commit/cd7efd7d0fde568d47b8121324fa2a2d4dc12cd8))
+
 ## [0.3.0](https://github.com/slnc/ifchange/compare/v0.2.1...v0.3.0) (2026-03-21)
 
 
