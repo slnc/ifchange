@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785353943068,
+  "lastUpdate": 1785383783397,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -2831,6 +2831,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 53395477,
             "range": "± 395285",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "51fa3f08377fd7f0847c026acee9c7cd0699e7a7",
+          "message": "chore(deps): update actions/setup-node and actions/setup-python to v7 (#51)\n\nRenovate major update for GitHub Actions used in CI and release\nworkflows.\n\n## Changes\n\n- **`actions/setup-node` v6 → v7**\n(`820762786026740c76f36085b0efc47a31fe5020`) in three places:\n  - `.github/workflows/ci.yml` (2 occurrences)\n  - `.github/workflows/release-binaries.yml` (npm publish job)\n- **`actions/setup-python` v6 → v7**\n(`5fda3b95a4ea91299a34e894583c3862153e4b97`) in\n`.github/workflows/release-binaries.yml` (PyPI publish job)\n\nAll actions stay pinned to full commit SHAs with a version comment,\nmatching the existing convention. No changes to `node-version: '24'` or\n`python-version: '3.14'` inputs.\n\nCo-authored-by: slnc-renovate-ci[bot] <264827662+slnc-renovate-ci[bot]@users.noreply.github.com>",
+          "timestamp": "2026-07-30T03:54:34Z",
+          "tree_id": "90e681ab9fbbf7cd16a8e4a83b22f016571ac134",
+          "url": "https://github.com/slnc/ifchange/commit/51fa3f08377fd7f0847c026acee9c7cd0699e7a7"
+        },
+        "date": 1785383782871,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4421147,
+            "range": "± 23540",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7131847,
+            "range": "± 78467",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 37718737,
+            "range": "± 1615139",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 63551213,
+            "range": "± 467636",
             "unit": "ns/iter"
           }
         ]
