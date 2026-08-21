@@ -47,7 +47,7 @@ pub fn parse_file_directives(file_path: &str) -> Result<Vec<Directive>, Directiv
 fn effective_extension(file_path: &str) -> &str {
     let filename = std::path::Path::new(file_path)
         .file_name()
-        .and_then(|s| s.to_str())
+        .and_then(std::ffi::OsStr::to_str)
         .unwrap_or(file_path);
     let filename_lower = filename.as_bytes();
     // "Dockerfile" or "Dockerfile.something"

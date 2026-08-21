@@ -378,7 +378,7 @@ fn clean_block_comment(raw: &str) -> String {
             let trimmed = line.trim_start();
             if let Some(rest) = trimmed.strip_prefix("* ") {
                 rest
-            } else if trimmed.strip_prefix('*').is_some_and(|s| s.is_empty()) {
+            } else if trimmed.strip_prefix('*').is_some_and(str::is_empty) {
                 ""
             } else if let Some(rest) = trimmed.strip_prefix('*') {
                 rest
@@ -433,7 +433,7 @@ fn extract_apostrophe_style(content: &str) -> Vec<Comment> {
         let trimmed = line.trim_start();
         if trimmed.len() >= 3 && trimmed[..3].eq_ignore_ascii_case("rem") {
             let after = trimmed[3..].chars().next();
-            if after.is_none() || after.is_some_and(|c| c.is_whitespace()) {
+            if after.is_none() || after.is_some_and(char::is_whitespace) {
                 comments.push(Comment {
                     start_line: idx + 1,
                     text: trimmed[3..].to_string(),
