@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785384034729,
+  "lastUpdate": 1787311022785,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -2927,6 +2927,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 55159028,
             "range": "± 345957",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "277063ac79ea1f33d85ff44689bbe4aeb0bec1af",
+          "message": "fix: recognize LINT directives in extensionless Makefiles (#53)\n\nExtensionless `Makefile`s never had their `#`-comment `LINT.*`\ndirectives recognized. With no extension, they fell through to the\nunknown-extension path, which tries C-style comments first and only\nfalls back to hash style if C-style finds nothing. Any Makefile with a\n`//` in a URL (e.g. `URL = https://...`) gave C-style a non-empty\nresult, so hash extraction never ran and the directives were invisible.\n\nFix: map `Makefile`, `makefile`, and `GNUmakefile` to the existing `mk`\nhash-style extension in `effective_extension()`, the same\nspecial-filename path already used for `Dockerfile` and `go.mod`. Tests\ncover the URL regression at both the extraction and the parse layer, and\nthe README special-files list is updated (its `LINT.ThenChange` guard\nnow points at both source files).\n\nAlso folds in three redundant-closure cleanups SonarQube flagged in the\ntouched files (`OsStr::to_str`, `str::is_empty`, `char::is_whitespace`).",
+          "timestamp": "2026-08-21T13:14:43+02:00",
+          "tree_id": "92c828000ec9e67bb12ef120090d4bc2a07efbe4",
+          "url": "https://github.com/slnc/ifchange/commit/277063ac79ea1f33d85ff44689bbe4aeb0bec1af"
+        },
+        "date": 1787311022002,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4284665,
+            "range": "± 58616",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 6098163,
+            "range": "± 93782",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 34952853,
+            "range": "± 702578",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 37752739,
+            "range": "± 795939",
             "unit": "ns/iter"
           }
         ]
