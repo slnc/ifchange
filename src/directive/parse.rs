@@ -47,7 +47,7 @@ pub fn parse_file_directives(file_path: &str) -> Result<Vec<Directive>, Directiv
 fn effective_extension(file_path: &str) -> &str {
     let filename = std::path::Path::new(file_path)
         .file_name()
-        .and_then(|s| s.to_str())
+        .and_then(std::ffi::OsStr::to_str)
         .unwrap_or(file_path);
     let filename_lower = filename.as_bytes();
     // "Dockerfile" or "Dockerfile.something"
@@ -60,6 +60,10 @@ fn effective_extension(file_path: &str) -> &str {
     // "go.mod" uses // line comments
     if filename.eq_ignore_ascii_case("go.mod") {
         return "go.mod";
+    }
+    // "Makefile", "makefile", "GNUmakefile" (no extension) use # comments
+    if filename.eq_ignore_ascii_case("makefile") || filename.eq_ignore_ascii_case("gnumakefile") {
+        return "mk";
     }
     filename.rsplit('.').next().unwrap_or("")
 }
@@ -705,6 +709,30 @@ mod tests {
     fn dockerfile_variant_parses_hash_comments() {
         let content = "# LINT.IfChange\nRUN echo hi\n# LINT.ThenChange(\"other.py\")\n";
         let directives = parse_directives_from_content(content, "Dockerfile.prod").unwrap();
+        assert_eq!(then_targets(directives), vec!["other.py"]);
+    }
+
+    #[rstest]
+    #[case("Makefile", "mk")]
+    #[case("makefile", "mk")]
+    #[case("GNUmakefile", "mk")]
+    #[case("gnumakefile", "mk")]
+    #[case("MAKEFILE", "mk")]
+    #[case("path/to/Makefile", "mk")]
+    #[case("path/to/GNUmakefile", "mk")]
+    fn effective_extension_makefile_variants(#[case] path: &str, #[case] expected: &str) {
+        assert_eq!(effective_extension(path), expected);
+    }
+
+    #[rstest]
+    #[case("Makefile")]
+    #[case("makefile")]
+    #[case("GNUmakefile")]
+    fn makefile_parses_hash_comments_despite_url(#[case] filename: &str) {
+        // Regression: a `//` in a URL must not defeat hash-style extraction of
+        // `#` LINT directives in an extensionless Makefile.
+        let content = "URL = https://example.com/x\n# LINT.IfChange\nVAR = 1\n# LINT.ThenChange(\"other.py\")\n";
+        let directives = parse_directives_from_content(content, filename).unwrap();
         assert_eq!(then_targets(directives), vec!["other.py"]);
     }
 }

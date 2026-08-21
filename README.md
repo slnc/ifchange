@@ -284,8 +284,8 @@ Wall-clock time to lint a 30k-line diff or scan all directives in a synthetic 50
 | `.conf` | `.fsx` | `.jsx` | `.pro` | `.svelte` | `.zig` |
 | `.cpp` | `.gd` | `.ksh` | `.prolog` | `.svg` | `.zsh` |
 
-**Special files**: `Dockerfile{,.*}`, `.gitignore`, `go.mod`
-<!-- LINT.ThenChange("src/comment/extract.rs") -->
+**Special files**: `Dockerfile{,.*}`, `.gitignore`, `go.mod`, `Makefile` / `makefile` / `GNUmakefile`
+<!-- LINT.ThenChange(["src/comment/extract.rs", "src/directive/parse.rs"]) -->
 
 ## Recommended AGENTS.md / CLAUDE.md
 
