@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/slnc/ifchange/compare/v0.3.1...v0.3.2) (2026-08-21)
+
+
+### Bug Fixes
+
+* recognize LINT directives in extensionless Makefiles ([#53](https://github.com/slnc/ifchange/issues/53)) ([277063a](https://github.com/slnc/ifchange/commit/277063ac79ea1f33d85ff44689bbe4aeb0bec1af))
+
 ## [0.3.1](https://github.com/slnc/ifchange/compare/v0.3.0...v0.3.1) (2026-07-30)
 
 
