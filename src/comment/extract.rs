@@ -84,7 +84,8 @@ const HTML_STYLE_EXTS: &[&str] = &[
     "html", "htm", "xml", "svg", "md", "vue", "svelte", "xsl", "xslt", "jsp", "erb",
 ];
 // Special filenames: "dockerfile" matches Dockerfile and Dockerfile.* variants
-// (see effective_extension() in directive/parse.rs), "gitignore" matches .gitignore.
+// (see effective_extension() in directive/parse.rs), "gitignore" matches .gitignore,
+// "mk" matches Makefile, makefile, and GNUmakefile (extensionless).
 // LINT.ThenChange("../../README.md#supported-languages")
 
 /// Extract all comments from `content`, using the comment style implied by `file_ext`
@@ -756,6 +757,27 @@ mod tests {
         ext: &str,
     ) {
         assert_eq!(extract_comments("# note\ncode\n", ext), vec![c(1, " note")]);
+    }
+
+    #[test]
+    fn makefile_url_does_not_defeat_hash_directives() {
+        // Regression: a Makefile (mapped to "mk") containing a `//` URL must still
+        // extract its `#` LINT directives. The old unknown-ext branch tried C-style
+        // first, matched the `//` in the URL, and never fell back to hash style.
+        let content = "URL = https://example.com/x\n# LINT.Label(foo)\nVAR = 1\n# LINT.EndLabel\n";
+        let comments = extract_comments(content, "mk");
+        assert!(
+            comments.iter().any(|c| c.text.contains("LINT.Label(foo)")),
+            "hash directives must be extracted despite // in URL: {:?}",
+            comments
+        );
+        assert!(
+            comments.iter().any(|c| c.text.contains("LINT.EndLabel")),
+            "hash directives must be extracted despite // in URL: {:?}",
+            comments
+        );
+        // The URL line is not a comment and must not appear.
+        assert!(!comments.iter().any(|c| c.text.contains("https")));
     }
 
     #[rstest]
