@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787340798324,
+  "lastUpdate": 1790520361094,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -3023,6 +3023,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 53940880,
             "range": "± 453287",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fe2ac14c2486d082c45baaaad3c3afeb41f5f9e6",
+          "message": "chore: add make clean to remove build artifacts (#56)\n\n## Why\nNo single command cleaned all generated artifacts; `target/` alone grows\nto multiple GiB.\n\n## What\n- Add `Makefile` with a `clean` target that runs `cargo clean` and\nremoves generated npm/pypi packaging output (`pypi/ifchange/bin`,\n`pypi/dist`, `npm/platforms`, `npm/README.md`) and Python `__pycache__`\ndirs.\n\n## Verify / Risk\n- [x] Ran `make clean` locally; removed all listed artifacts, reclaimed\n~3.6 GiB. Only removes gitignored/generated files.",
+          "timestamp": "2026-09-27T16:44:06+02:00",
+          "tree_id": "607f68a0c47eeaf35813f51a47be54def29d5605",
+          "url": "https://github.com/slnc/ifchange/commit/fe2ac14c2486d082c45baaaad3c3afeb41f5f9e6"
+        },
+        "date": 1790520360249,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 2478254,
+            "range": "± 41154",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 4563883,
+            "range": "± 337181",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 27874612,
+            "range": "± 1173074",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 38455625,
+            "range": "± 502492",
             "unit": "ns/iter"
           }
         ]
