@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791804467237,
+  "lastUpdate": 1792694984209,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -3119,6 +3119,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 48269295,
             "range": "± 1007540",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "264827662+slnc-renovate-ci[bot]@users.noreply.github.com",
+            "name": "slnc-renovate-ci[bot]",
+            "username": "slnc-renovate-ci[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "51ad62f9e4974b8ca9fc85d9d3116b049a815b34",
+          "message": "chore(deps): update all non-security dependencies (#57)\n\nThis PR contains the following updates:\n\n| Package | Type | Update | Change | Pending |\n|---|---|---|---|---|\n|\n[actions/create-github-app-token](https://redirect.github.com/actions/create-github-app-token)\n([changelog](https://redirect.github.com/actions/create-github-app-token/compare/bcd2ba49218906704ab6c1aa796996da409d3eb1..64ab729a6294000f5aa4a4bc0b73d1f32bc45510))\n| action | digest | `bcd2ba4` → `64ab729` | |\n|\n[dtolnay/rust-toolchain](https://redirect.github.com/dtolnay/rust-toolchain)\n([changelog](https://redirect.github.com/dtolnay/rust-toolchain/compare/4360b52568e2003a75bf9bc1d59f33a8e3fc893c..b725eda525362e7cf34af9a7243cac1e3f01a7ec))\n| action | digest | `4360b52` → `b725eda` | |\n| [python](https://redirect.github.com/actions/python-versions) |\nuses-with | minor | `3.14` → `3.15` | `3.15.1` |\n|\n[renovatebot/github-action](https://redirect.github.com/renovatebot/github-action)\n| action | patch | `v46.3.7` → `v46.3.8` | `v46.3.9` |\n\n---\n\n> [!WARNING]\n> Some dependencies could not be looked up. Check the warning logs for\nmore information.\n\n---\n\n### Release Notes\n\n<details>\n<summary>actions/python-versions (python)</summary>\n\n###\n[`v3.15.0`](https://redirect.github.com/actions/python-versions/releases/tag/3.15.0-38076878863):\n3.15.0\n\n[Compare\nSource](https://redirect.github.com/actions/python-versions/compare/3.14.9-39619022138...3.15.0-38076878863)\n\nPython 3.15.0\n\n</details>\n\n<details>\n<summary>renovatebot/github-action</summary>\n\n###\n[`v46.3.8`](https://redirect.github.com/renovatebot/github-action/releases/tag/v46.3.8)\n\n[Compare\nSource](https://redirect.github.com/renovatebot/github-action/compare/v46.3.7...v46.3.8)\n\n##### Documentation\n\n- update references to renovatebot/github-action to v46.3.7\n([a273844](https://redirect.github.com/renovatebot/github-action/commit/a27384414c23685d687faad8d13c5fa807f4a8a1))\n\n##### Miscellaneous Chores\n\n- **deps:** update actions/setup-node action to v7.1.0\n([6f17fe9](https://redirect.github.com/renovatebot/github-action/commit/6f17fe917ea9c59600a41b905247072b0cca76c5))\n- **deps:** update dependency\n[@&#8203;types/node](https://redirect.github.com/types/node) to v24.19.1\n([15f0ee7](https://redirect.github.com/renovatebot/github-action/commit/15f0ee74d2de8a373f7e2188b5408fa27d9bfda1))\n- **deps:** update dependency globals to v17.13.0\n([22f44b2](https://redirect.github.com/renovatebot/github-action/commit/22f44b27c8b75c798ef23b4b15bf85a44357b7dd))\n- **deps:** update dependency typescript-eslint to v8.71.0\n([4e1dc65](https://redirect.github.com/renovatebot/github-action/commit/4e1dc65714dd22fe285b822317be296dd22cd0d2))\n- **deps:** update pnpm to v10.34.6\n([c6c4e3c](https://redirect.github.com/renovatebot/github-action/commit/c6c4e3c08b9ed41a6df20b3844cb6ae20c23c96b))\n\n##### Build System\n\n- **deps:** lock file maintenance\n([b35dbc9](https://redirect.github.com/renovatebot/github-action/commit/b35dbc91f485f6844a39f9a874a341c6a678272c))\n\n##### Continuous Integration\n\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.134.1\n([bb79b7a](https://redirect.github.com/renovatebot/github-action/commit/bb79b7a8c916440a921ba96fa81bbb98bd369a40))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.135.0\n([8e77cf4](https://redirect.github.com/renovatebot/github-action/commit/8e77cf46224fc50340c7721f3022d7af87a8ffaa))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.137.0\n([a44fc20](https://redirect.github.com/renovatebot/github-action/commit/a44fc209d662d5250cfdb8ab5139214a258bff61))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.138.0\n([b973134](https://redirect.github.com/renovatebot/github-action/commit/b9731341b8514f118f5e97673a601c7807d41098))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.139.0\n([430b063](https://redirect.github.com/renovatebot/github-action/commit/430b0633dd502b84a4cea72d462798a17b0dfdaa))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.140.0\n([8bc7704](https://redirect.github.com/renovatebot/github-action/commit/8bc77042671b7387d7bf98b0adebb17860d72dad))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.141.0\n([6181226](https://redirect.github.com/renovatebot/github-action/commit/6181226b77722201427781282a7e168cc7f819b7))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.142.1\n([6b62f26](https://redirect.github.com/renovatebot/github-action/commit/6b62f260ebf89ffd6358a81b233bb77973cacde0))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.143.0\n([cc52bde](https://redirect.github.com/renovatebot/github-action/commit/cc52bde2e8f8439c5aa18469f8448a0163a0e5e4))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.144.1\n([1032cc2](https://redirect.github.com/renovatebot/github-action/commit/1032cc275d407b1bf4a3aec17088ff88e133c575))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.145.1\n([7cb03f9](https://redirect.github.com/renovatebot/github-action/commit/7cb03f93d646f08b89ee0b841145fb1603da43fa))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.145.3\n([e0ac9d9](https://redirect.github.com/renovatebot/github-action/commit/e0ac9d90bd7c8a1c9d855063eabe8352c503f602))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.147.0\n([750014e](https://redirect.github.com/renovatebot/github-action/commit/750014e4fc65baa512aceb8d31a63aa367c4a79a))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.148.0\n([9b5e926](https://redirect.github.com/renovatebot/github-action/commit/9b5e926b301b29f889951c7f49b08c616413357c))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.148.3\n([d05a9c8](https://redirect.github.com/renovatebot/github-action/commit/d05a9c845e1b9f8cf2769c35eabece68de4c9282))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.148.4\n([d205fa1](https://redirect.github.com/renovatebot/github-action/commit/d205fa11861b0364a6473820294ed5039a663e47))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.148.6\n([4c2ff13](https://redirect.github.com/renovatebot/github-action/commit/4c2ff13b7fa72ac787e032140e282e15ee4021a5))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.149.0\n([d8854cb](https://redirect.github.com/renovatebot/github-action/commit/d8854cbfc3bc2425b4b68dc089199f7e28e715cf))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.149.1\n([85af5b5](https://redirect.github.com/renovatebot/github-action/commit/85af5b5089e6b8f0e9b5a142a879da5c9f8cf8b1))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.149.2\n([fdc3ae9](https://redirect.github.com/renovatebot/github-action/commit/fdc3ae9e1eac21794ba0313e4ff306161c7ae2d7))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.149.3\n([a2327c1](https://redirect.github.com/renovatebot/github-action/commit/a2327c167a51153836a65e7f5fd148d8865b3e60))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.150.1\n([5b963ba](https://redirect.github.com/renovatebot/github-action/commit/5b963bac82f6192104c6f55ba32467d440232bda))\n- **deps:** update ghcr.io/renovatebot/renovate docker tag to v44.151.0\n([96a197e](https://redirect.github.com/renovatebot/github-action/commit/96a197e214f42a35c340cbce31aa3726a972ccfc))\n\n</details>\n\n---\n\n### Configuration\n\n📅 **Schedule**: (in timezone UTC)\n\n- Branch creation\n  - \"on monday\"\n- Automerge\n  - At any time (no schedule defined)\n\n🚦 **Automerge**: Disabled by config. Please merge this manually once you\nare satisfied.\n\n♻ **Rebasing**: Whenever PR is behind base branch, or you tick the\nrebase/retry checkbox.\n\n👻 **Immortal**: This PR will be recreated if closed unmerged. Get\n[config\nhelp](https://redirect.github.com/renovatebot/renovate/discussions) if\nthat's undesired.\n\n---\n\n- [ ] <!-- rebase-check -->If you want to rebase/retry this PR, check\nthis box\n\n---\n\nThis PR has been generated by [Mend Renovate\nCLI](https://redirect.github.com/renovatebot/renovate).\n\n<!--renovate-debug:eyJjcmVhdGVkSW5WZXIiOiI0NC4xNjcuNiIsInVwZGF0ZWRJblZlciI6IjQ0LjE3Ni4yIiwidGFyZ2V0QnJhbmNoIjoibWFpbiIsImxhYmVscyI6W119-->\n\nCo-authored-by: slnc-renovate-ci[bot] <264827662+slnc-renovate-ci[bot]@users.noreply.github.com>",
+          "timestamp": "2026-10-22T20:47:45+02:00",
+          "tree_id": "e1b94e4c6457833a4c5562fa163349929fa79295",
+          "url": "https://github.com/slnc/ifchange/commit/51ad62f9e4974b8ca9fc85d9d3116b049a815b34"
+        },
+        "date": 1792694983837,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 3701113,
+            "range": "± 189678",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 6390859,
+            "range": "± 422000",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 39129049,
+            "range": "± 2722346",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 51562765,
+            "range": "± 2575833",
             "unit": "ns/iter"
           }
         ]
