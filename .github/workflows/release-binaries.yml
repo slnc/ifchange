@@ -182,7 +182,7 @@ jobs:
           merge-multiple: true
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
 
       - name: Generate checksums
         shell: bash
@@ -220,7 +220,7 @@ jobs:
           output-file: ./dist/sbom.spdx.json
 
       - name: Publish release assets
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: ${{ needs.resolve-tag.outputs.tag }}
           generate_release_notes: false
@@ -278,7 +278,7 @@ jobs:
           toolchain: stable
 
       - name: Authenticate with crates.io
-        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+        uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
         id: auth
 
       - name: Publish to crates.io
@@ -444,7 +444,7 @@ jobs:
           ref: ${{ needs.resolve-tag.outputs.tag }}
 
       - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.15'
 
@@ -465,6 +465,6 @@ jobs:
           python -m build
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
         with:
           packages-dir: pypi/dist/
