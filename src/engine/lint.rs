@@ -45,7 +45,12 @@ pub fn lint_diff(
         .map(|file| {
             (
                 file.clone(),
-                index_changed_file(repo_root, file, &changed_files_map[file]),
+                index_changed_file(
+                    repo_root,
+                    file,
+                    &changed_files_map[file],
+                    &changed_lines_map[file],
+                ),
             )
         })
         .collect();
@@ -210,31 +215,7 @@ pub fn lint_diff(
             None => continue,
         };
 
-        // Directive edits are metadata. Deletions use new-file gap positions,
-        // so a boundary rewrite can collapse both inside and outside removals
-        // onto the same line; their old-file order determines which side changed.
-        let if_line_replaced = source_changed.addition_lines.contains(&p.if_line);
-        let then_line_replaced = source_changed.addition_lines.contains(&p.then_line);
-        let triggered = source_changed
-            .addition_lines
-            .iter()
-            .any(|&line| line > p.if_line && line < p.then_line)
-            || source_changed.removal_lines.iter().any(|&line| {
-                if line == p.if_line {
-                    if_line_replaced
-                        && source_changed.removal_count_at(line) > 1
-                        && source_changed.has_content_removal_after_directive(line)
-                } else if line == p.then_line {
-                    if then_line_replaced {
-                        source_changed.removal_count_at(line) > 1
-                            && source_changed.has_content_removal_before_directive(line)
-                    } else {
-                        true
-                    }
-                } else {
-                    line > p.if_line && line < p.then_line
-                }
-            });
+        let triggered = source_changed.triggers_pair(p);
 
         if !triggered {
             continue;

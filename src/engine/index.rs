@@ -32,6 +32,33 @@ pub(super) struct ChangedLines {
 }
 
 impl ChangedLines {
+    pub(super) fn triggers_pair(&self, p: &Pair) -> bool {
+        // Directive edits are metadata. Deletions use new-file gap positions,
+        // so a boundary rewrite can collapse both inside and outside removals
+        // onto the same line; their old-file order determines which side changed.
+        let if_line_replaced = self.addition_lines.contains(&p.if_line);
+        let then_line_replaced = self.addition_lines.contains(&p.then_line);
+        self.addition_lines
+            .iter()
+            .any(|&line| line > p.if_line && line < p.then_line)
+            || self.removal_lines.iter().any(|&line| {
+                if line == p.if_line {
+                    if_line_replaced
+                        && self.removal_count_at(line) > 1
+                        && self.has_content_removal_after_directive(line)
+                } else if line == p.then_line {
+                    if then_line_replaced {
+                        self.removal_count_at(line) > 1
+                            && self.has_content_removal_before_directive(line)
+                    } else {
+                        true
+                    }
+                } else {
+                    line > p.if_line && line < p.then_line
+                }
+            })
+    }
+
     /// How many raw removal lines map to the given gap position.
     pub(super) fn removal_count_at(&self, pos: usize) -> usize {
         self.removal_line_details.get(&pos).map_or(0, |v| v.len())
@@ -144,11 +171,13 @@ fn new_ifchange_lines(
     file: &str,
     changes: &FileChanges,
     directives: &[Directive],
+    pairs: &[Pair],
+    changed_lines: &ChangedLines,
 ) -> HashSet<usize> {
     let added = &changes.addition_new_lines;
-    if !directives
+    if !pairs
         .iter()
-        .any(|d| matches!(d, Directive::IfChange { line, .. } if added.contains(line)))
+        .any(|p| added.contains(&p.if_line) && changed_lines.triggers_pair(p))
     {
         return HashSet::new();
     }
@@ -230,11 +259,18 @@ pub(super) fn index_changed_file(
     repo_root: &Path,
     file: &str,
     changes: &FileChanges,
+    changed_lines: &ChangedLines,
 ) -> Result<ChangedFileOutcome, String> {
     let directives = parse_file_directives(&fs_path(repo_root, file)).map_err(|e| e.to_string())?;
     let uniqueness_errors = validate_directive_uniqueness(&directives, file);
     let (mut pairs, orphan_then, orphan_if) = build_pairs(file, &directives);
-    let new_guards = new_ifchange_lines(&fs_path(repo_root, file), changes, &directives);
+    let new_guards = new_ifchange_lines(
+        &fs_path(repo_root, file),
+        changes,
+        &directives,
+        &pairs,
+        changed_lines,
+    );
     pairs.retain(|pair| !new_guards.contains(&pair.if_line));
 
     Ok(ChangedFileOutcome {
@@ -385,6 +421,32 @@ fn build_label_ranges(directives: &[Directive]) -> HashMap<String, LineRange> {
 mod tests {
     use super::*;
     use std::collections::HashSet;
+
+    #[test]
+    fn disappearing_source_does_not_disable_guard() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let path = dir.path().join("source.py");
+        let file = path.to_str().unwrap();
+        std::fs::write(
+            &path,
+            "# LINT.IfChange\nVALUE = 2\n# LINT.ThenChange(target.py)\n",
+        )
+        .unwrap();
+        let directives = parse_file_directives(file).unwrap();
+        let (pairs, _, _) = build_pairs(file, &directives);
+        let diff = "--- a/source.py\n+++ b/source.py\n@@ -1 +1,3 @@\n-VALUE = 1\n+# LINT.IfChange\n+VALUE = 2\n+# LINT.ThenChange(target.py)\n";
+        let changes = crate::diff::parse_changed_lines(diff);
+        let changed_lines = build_changed_lines_map(&changes);
+        std::fs::remove_file(&path).unwrap();
+        assert!(new_ifchange_lines(
+            file,
+            &changes["source.py"],
+            &directives,
+            &pairs,
+            &changed_lines["source.py"]
+        )
+        .is_empty());
+    }
 
     #[test]
     fn build_changed_lines_map_dedups() {

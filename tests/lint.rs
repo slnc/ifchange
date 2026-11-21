@@ -1767,10 +1767,12 @@ fn introducing_guard_still_validates_its_target() {
     assert!(stderr.contains("missing.py"), "{stderr}");
 }
 
-#[test]
-fn independent_new_guards_do_not_disable_existing_guard() {
+#[rstest::rstest]
+#[case::rewritten_opening("-# LINT.IfChange\n-VALUE = 1\n+# LINT.IfChange(existing)\n+VALUE = 2")]
+#[case::unchanged_opening(" # LINT.IfChange(existing)\n-VALUE = 1\n+VALUE = 2")]
+fn independent_new_guards_do_not_disable_existing_guard(#[case] opening_diff: &str) {
     let source = "# LINT.IfChange(existing)\nVALUE = 2\n# LINT.ThenChange(existing.py)\n# separator\n# LINT.IfChange(first)\nFIRST = 1\n# LINT.ThenChange(first.py)\n# separator\n# LINT.IfChange(second)\nSECOND = 1\n# LINT.ThenChange(second.py)\n";
-    let hunk = "@@ -1,5 +1,11 @@\n-# LINT.IfChange\n-VALUE = 1\n+# LINT.IfChange(existing)\n+VALUE = 2\n # LINT.ThenChange(existing.py)\n # separator\n+# LINT.IfChange(first)\n+FIRST = 1\n+# LINT.ThenChange(first.py)\n # separator\n+# LINT.IfChange(second)\n+SECOND = 1\n+# LINT.ThenChange(second.py)";
+    let hunk = format!("@@ -1,5 +1,11 @@\n{opening_diff}\n # LINT.ThenChange(existing.py)\n # separator\n+# LINT.IfChange(first)\n+FIRST = 1\n+# LINT.ThenChange(first.py)\n # separator\n+# LINT.IfChange(second)\n+SECOND = 1\n+# LINT.ThenChange(second.py)");
     let (code, _, stderr) = lint_case_repo(
         &[
             ("source.py", source),
@@ -1778,7 +1780,7 @@ fn independent_new_guards_do_not_disable_existing_guard() {
             ("first.py", "FIRST = 1\n"),
             ("second.py", "SECOND = 1\n"),
         ],
-        &[("source.py", hunk)],
+        &[("source.py", &hunk)],
         &[],
     );
     assert_eq!(code, 1, "{stderr}");
@@ -1788,4 +1790,21 @@ fn independent_new_guards_do_not_disable_existing_guard() {
     );
     assert!(!stderr.contains("first.py"), "{stderr}");
     assert!(!stderr.contains("second.py"), "{stderr}");
+}
+
+#[test]
+fn repairing_malformed_guard_does_not_disable_enforcement() {
+    let (code, _, stderr) = lint_case(
+        &[
+            ("source.py", "# LINT.IfChange\nVALUE = 2\n# LINT.ThenChange(target.py)\n"),
+            ("target.py", "VALUE = 1\n"),
+        ],
+        &[("source.py", "@@ -1,3 +1,3 @@\n-# LINT.IfChange(\n-VALUE = 1\n+# LINT.IfChange\n+VALUE = 2\n # LINT.ThenChange(target.py)")],
+        &[],
+    );
+    assert_eq!(
+        code, 1,
+        "an invalid preimage must retain enforcement: {stderr}"
+    );
+    assert!(stderr.contains("target file unchanged"), "{stderr}");
 }
