@@ -1,9 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 use super::{ChangedFileOutcome, FileIndex, Pair, TargetLoad};
 use crate::directive::{
-    looks_like_directive, parse_file_directives, validate_directive_uniqueness,
+    looks_like_directive, parse_directives_from_content, parse_file_directives,
+    validate_directive_uniqueness,
 };
 use crate::engine::resolve::{resolve_target_path, split_target_label};
 use crate::model::{Directive, FileChanges, LineRange};
@@ -31,6 +32,33 @@ pub(super) struct ChangedLines {
 }
 
 impl ChangedLines {
+    pub(super) fn triggers_pair(&self, p: &Pair) -> bool {
+        // Directive edits are metadata. Deletions use new-file gap positions,
+        // so a boundary rewrite can collapse both inside and outside removals
+        // onto the same line; their old-file order determines which side changed.
+        let if_line_replaced = self.addition_lines.contains(&p.if_line);
+        let then_line_replaced = self.addition_lines.contains(&p.then_line);
+        self.addition_lines
+            .iter()
+            .any(|&line| line > p.if_line && line < p.then_line)
+            || self.removal_lines.iter().any(|&line| {
+                if line == p.if_line {
+                    if_line_replaced
+                        && self.removal_count_at(line) > 1
+                        && self.has_content_removal_after_directive(line)
+                } else if line == p.then_line {
+                    if then_line_replaced {
+                        self.removal_count_at(line) > 1
+                            && self.has_content_removal_before_directive(line)
+                    } else {
+                        true
+                    }
+                } else {
+                    line > p.if_line && line < p.then_line
+                }
+            })
+    }
+
     /// How many raw removal lines map to the given gap position.
     pub(super) fn removal_count_at(&self, pos: usize) -> usize {
         self.removal_line_details.get(&pos).map_or(0, |v| v.len())
@@ -137,13 +165,113 @@ pub(super) fn build_changed_lines_map(
         .collect()
 }
 
+/// Identify added guards that do not replace an old guard. Reconstructing the
+/// preimage keeps comment and string parsing identical to normal file parsing.
+fn new_ifchange_lines(
+    file: &str,
+    changes: &FileChanges,
+    directives: &[Directive],
+    pairs: &[Pair],
+    changed_lines: &ChangedLines,
+) -> HashSet<usize> {
+    let added = &changes.addition_new_lines;
+    if !pairs
+        .iter()
+        .any(|p| added.contains(&p.if_line) && changed_lines.triggers_pair(p))
+    {
+        return HashSet::new();
+    }
+    let Ok(content) = std::fs::read_to_string(file) else {
+        return HashSet::new();
+    };
+    let mut removals: HashMap<usize, Vec<&str>> = HashMap::new();
+    for (line, text) in &changes.removal_new_lines {
+        removals.entry(*line).or_default().push(text);
+    }
+    let lines: Vec<_> = content.lines().collect();
+    let mut old_content = String::new();
+    let mut old_gaps = Vec::new();
+    for line in 1..=lines.len() + 1 {
+        if let Some(removed) = removals.get(&line) {
+            for text in removed {
+                old_content.push_str(text);
+                old_content.push('\n');
+                old_gaps.push(line);
+            }
+        }
+        if line <= lines.len() && !added.contains(&line) {
+            old_content.push_str(lines[line - 1]);
+            old_content.push('\n');
+            old_gaps.push(line);
+        }
+    }
+    let Ok(old_directives) = parse_directives_from_content(&old_content, file) else {
+        // An invalid preimage must not disable existing enforcement.
+        return HashSet::new();
+    };
+    let old_if_gaps: HashSet<_> = old_directives
+        .iter()
+        .filter_map(|d| match d {
+            Directive::IfChange { line, .. } => old_gaps.get(line - 1).copied(),
+            _ => None,
+        })
+        .collect();
+    let mut added_lines: Vec<_> = added.iter().copied().collect();
+    added_lines.sort_unstable();
+    let mut added_ranges: Vec<(usize, usize)> = Vec::new();
+    for line in added_lines {
+        if let Some((_, end)) = added_ranges.last_mut() {
+            if line == *end + 1 {
+                *end = line;
+                continue;
+            }
+        }
+        added_ranges.push((line, line));
+    }
+    // A replacement can insert lines before its old guard. Retain enforcement
+    // for every guard in the same added run to avoid ambiguous matching.
+    let replacement_ranges: HashSet<_> = old_if_gaps
+        .iter()
+        .filter_map(|gap| {
+            let index = added_ranges.partition_point(|(_, end)| end < gap);
+            added_ranges
+                .get(index)
+                .filter(|(start, _)| start <= gap)
+                .map(|_| index)
+        })
+        .collect();
+    directives
+        .iter()
+        .filter_map(|d| {
+            let Directive::IfChange { line, .. } = d else {
+                return None;
+            };
+            if !added.contains(line) {
+                return None;
+            }
+            let index = added_ranges.partition_point(|(_, end)| end < line);
+            (!replacement_ranges.contains(&index)).then_some(*line)
+        })
+        .collect()
+}
+
 pub(super) fn index_changed_file(
     repo_root: &Path,
     file: &str,
+    changes: &FileChanges,
+    changed_lines: &ChangedLines,
 ) -> Result<ChangedFileOutcome, String> {
     let directives = parse_file_directives(&fs_path(repo_root, file)).map_err(|e| e.to_string())?;
     let uniqueness_errors = validate_directive_uniqueness(&directives, file);
-    let (pairs, orphan_then, orphan_if) = build_pairs(file, &directives);
+    let (mut pairs, orphan_then, orphan_if) = build_pairs(file, &directives);
+    let new_guards = new_ifchange_lines(
+        &fs_path(repo_root, file),
+        changes,
+        &directives,
+        &pairs,
+        changed_lines,
+    );
+    pairs.retain(|pair| !new_guards.contains(&pair.if_line));
 
     Ok(ChangedFileOutcome {
         index: FileIndex {
@@ -293,6 +421,32 @@ fn build_label_ranges(directives: &[Directive]) -> HashMap<String, LineRange> {
 mod tests {
     use super::*;
     use std::collections::HashSet;
+
+    #[test]
+    fn disappearing_source_does_not_disable_guard() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let path = dir.path().join("source.py");
+        let file = path.to_str().unwrap();
+        std::fs::write(
+            &path,
+            "# LINT.IfChange\nVALUE = 2\n# LINT.ThenChange(target.py)\n",
+        )
+        .unwrap();
+        let directives = parse_file_directives(file).unwrap();
+        let (pairs, _, _) = build_pairs(file, &directives);
+        let diff = "--- a/source.py\n+++ b/source.py\n@@ -1 +1,3 @@\n-VALUE = 1\n+# LINT.IfChange\n+VALUE = 2\n+# LINT.ThenChange(target.py)\n";
+        let changes = crate::diff::parse_changed_lines(diff);
+        let changed_lines = build_changed_lines_map(&changes);
+        std::fs::remove_file(&path).unwrap();
+        assert!(new_ifchange_lines(
+            file,
+            &changes["source.py"],
+            &directives,
+            &pairs,
+            &changed_lines["source.py"]
+        )
+        .is_empty());
+    }
 
     #[test]
     fn build_changed_lines_map_dedups() {

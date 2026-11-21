@@ -23,6 +23,8 @@ LINT.IfChange('my-label')        # labeled, single quotes
 LINT.IfChange(my-label)          # labeled, unquoted
 ```
 
+A newly introduced `IfChange` guard starts enforcing co-changes on subsequent changes, so adopting a guard does not require touching its targets in the same diff. Syntax and target validation still apply immediately. Rewriting an existing guard does not reset enforcement. If one replacement mixes old and new guards, enforcement is retained conservatively.
+
 ## LINT.ThenChange
 
 All accepted formats:
