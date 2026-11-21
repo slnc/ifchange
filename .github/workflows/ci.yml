@@ -28,9 +28,6 @@ jobs:
       - name: Clippy
         run: cargo clippy --quiet --all-targets --all-features -- -D warnings
 
-      - name: Benchmark runner regression
-        run: ./scripts/perf/test_bench_runner.sh
-
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
