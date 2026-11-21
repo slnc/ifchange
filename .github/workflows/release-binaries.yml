@@ -374,17 +374,12 @@ jobs:
             if [ $status -ne 0 ]; then
               if echo "$output" | grep -q "previously published\|cannot publish over"; then
                 echo "$pkg already published, skipping"
-              elif echo "$output" | grep -q "404 Not Found"; then
-                echo "$pkg not found on registry, retrying without --provenance..."
-                npm publish "$dir" --access public
               else
                 echo "::error::Failed to publish $pkg"
                 exit 1
               fi
             fi
           done
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Wait for platform packages on registry
         run: |
@@ -427,8 +422,6 @@ jobs:
           else
             npm publish ./npm --access public --provenance
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-pypi:
     runs-on: ubuntu-latest
