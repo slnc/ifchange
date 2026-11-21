@@ -156,7 +156,7 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    # Must be a tag ref: the generator rejects SHA refs.
+    # Generator rejects SHA refs.
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
     with:
       base64-subjects: "${{ needs.combine-hashes.outputs.hashes }}"
@@ -317,7 +317,6 @@ jobs:
         run: |
           VERSION="${RELEASE_TAG#v}"
           cd npm
-          # Update optionalDependencies versions to match
           node -e "
             const pkg = require('./package.json');
             for (const dep of Object.keys(pkg.optionalDependencies)) {
