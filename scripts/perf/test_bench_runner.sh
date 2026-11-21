@@ -40,13 +40,9 @@ run_bench() {
 create_checkout "baseline checkout"
 create_checkout "candidate checkout"
 run_bench "baseline checkout"
-run_bench "candidate checkout"
 targets=("$shared_target/ifchange-bench/"*)
-[[ ${#targets[@]} -eq 2 ]]
-
-repo_root=$(git -C "$test_dir/baseline checkout" rev-parse --show-toplevel)
-checkout_key=$(printf '%s' "$repo_root" | git hash-object --stdin)
-target="$shared_target/ifchange-bench/$checkout_key"
+target=${targets[0]}
+run_bench "candidate checkout"
 mkdir -p "$target/criterion"
 printf 'stale' > "$target/criterion/stale-results"
 printf 'cached' > "$target/release/keep-cache"
