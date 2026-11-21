@@ -25,7 +25,9 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
 
       - name: Run benchmarks
+        # Cached target/criterion has partial baselines that corrupt bencher output.
         run: |
+          rm -rf target/criterion
           cargo bench --bench lint_bench --bench scan_bench --bench latency_16kloc_bench -- --output-format bencher 2>&1 | tee bench_output.txt
 
       - name: Store benchmark result
