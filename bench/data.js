@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792694984209,
+  "lastUpdate": 1795285932972,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -3167,6 +3167,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 51562765,
             "range": "± 2575833",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ee3c35503d862f4aaf014767f5732eb3d59c2eae",
+          "message": "ci: publish npm packages via trusted publishing (OIDC) (#61)\n\nSwitch npm publishing from the long-lived `NPM_TOKEN` to npm trusted\npublishing (OIDC). 2FA-bypass tokens lose direct publish rights around\nJanuary 2027\n([changelog](https://github.blog/changelog/2026-07-08-npm-install-time-security-and-gat-bypass2fa-deprecation/)).\n\n- Drop `NODE_AUTH_TOKEN` from both publish steps; `publish-npm` already\nhas `id-token: write` and Node 24 (npm ≥ 11.5.1).\n- Drop the \"retry without `--provenance`\" fallback for unknown packages:\ntrusted publishing requires the package to exist.\n\n**Before merging:** configure a trusted publisher (`slnc/ifchange`,\nworkflow `release-binaries.yml`, no environment) on all 6 packages:\n`@slnc/ifchange` and\n`@slnc/ifchange-{linux-x64,linux-arm64,darwin-x64,darwin-arm64,win32-x64}`.\n\n**After the first successful release:** delete the `NPM_TOKEN` repo\nsecret and revoke the token on npmjs.com.",
+          "timestamp": "2026-11-21T18:30:09Z",
+          "tree_id": "a084099ecf8a1e6024ac697e664a07e14f08bda9",
+          "url": "https://github.com/slnc/ifchange/commit/ee3c35503d862f4aaf014767f5732eb3d59c2eae"
+        },
+        "date": 1795285932611,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4100082,
+            "range": "± 50477",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 6523219,
+            "range": "± 78144",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 32860628,
+            "range": "± 1758688",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 50645712,
+            "range": "± 870768",
             "unit": "ns/iter"
           }
         ]
