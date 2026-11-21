@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795285932972,
+  "lastUpdate": 1795286678588,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -3215,6 +3215,54 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 50645712,
             "range": "± 870768",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6efa07b0699d21f84108204378d6b78a79324f30",
+          "message": "ci: clear cached criterion baselines before benchmarks (#62)\n\nFixes the flaky \\`Performance\\` job (e.g. on #59).\n\n**Cause:** when \\`Swatinem/rust-cache\\` restores a cache,\n\\`target/criterion/<bench>/base/\\` comes back incomplete (no\n\\`sample.json\\`). Criterion then prints \\`Criterion.rs ERROR: Failed to\naccess file .../base/sample.json\\` on the same line as \\`test <name>\n...\\`. That breaks the \\`bench:\\` line format, so\n\\`github-action-benchmark\\` fails with \"No benchmark result was found\".\n\nEvery failing run had a cache hit and every passing run had \"No cache\nfound\". The Node bump in #59 is unrelated.\n\n**Fix:** \\`rm -rf target/criterion\\` before \\`cargo bench\\` in\n\\`ci.yml\\` and \\`post-merge.yml\\`. Regressions are still tracked against\nthe gh-pages data, so local baselines aren't needed.",
+          "timestamp": "2026-11-21T19:43:09+01:00",
+          "tree_id": "417b037365131e0559e9dbd0edc5e6c4fb86d2a4",
+          "url": "https://github.com/slnc/ifchange/commit/6efa07b0699d21f84108204378d6b78a79324f30"
+        },
+        "date": 1795286677998,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 3370127,
+            "range": "± 10542",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 5219774,
+            "range": "± 44428",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 26586197,
+            "range": "± 571823",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 46360168,
+            "range": "± 168338",
             "unit": "ns/iter"
           }
         ]
