@@ -22,14 +22,7 @@ clean:
     cargo clean
 
 perf:
-    @echo "── lint: 5000 files, 21 lang types ──"
-    @cargo bench --bench lint_bench 2>&1 | grep -E "^[a-z_]|time:"
-    @echo ""
-    @echo "── check: 5000 files, directive validation ──"
-    @cargo bench --bench scan_bench 2>&1 | grep -E "^[a-z_]|time:"
-    @echo ""
-    @echo "── parser: single 16k-line diff ──"
-    @cargo bench --bench latency_16kloc_bench 2>&1 | grep -E "^[a-z_]|time:"
+    ./scripts/perf/bench.sh --bench lint_bench --bench scan_bench --bench latency_16kloc_bench
 
 perf_history:
     @gh api 'repos/slnc/ifchange/contents/bench/data.js?ref=gh-pages' --jq '.content' \
