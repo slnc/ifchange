@@ -158,6 +158,7 @@ jobs:
 
       - name: Run benchmarks
         run: |
+          rm -rf target/criterion
           cargo bench --bench lint_bench --bench scan_bench --bench latency_16kloc_bench -- --output-format bencher 2>&1 | tee bench_output.txt
 
       - name: Store benchmark result
