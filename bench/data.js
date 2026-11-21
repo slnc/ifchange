@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795287806699,
+  "lastUpdate": 1795288981226,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -3317,6 +3317,60 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 27906769,
             "range": "± 494113",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "263f3e0a7dbf152f20c393228993c2c70508bbef",
+          "message": "ci: isolate benchmarks and pin coverage floor (#65)\n\n## Why\nWhen two checkouts share `CARGO_TARGET_DIR`, Cargo can run one\ncheckout's cached benchmark executable in the other checkout. This makes\nthe benchmark comparison invalid. Codecov's automatic project coverage\ntarget also rejects stable coverage because it compares against an\noutdated baseline.\n\n## What\n- Give each checkout its own benchmark build directory under\n`CARGO_TARGET_DIR`. Repeated runs in the same checkout still reuse\ncompiled code.\n- Use the same benchmark runner for `just perf` and both CI workflows.\nClear old Criterion measurements without deleting compiled code.\n- Make CI fail when a benchmark fails, even when its output is piped\nthrough `tee`.\n- Set the minimum coverage for `codecov/project` to **97.50%**. Any\nresult below that fails the check. Patch coverage keeps its existing\ndefaults.\n\n## Coverage floor rationale\nThe [20 most recent completed CI runs with project coverage\nresults](https://github.com/slnc/ifchange/actions/workflows/ci.yml),\nfrom October 20 to November 21, recorded coverage between **97.51% and\n97.80%**, with an average of **97.69%**. None fell below 97.50%; the\nlatest result was 97.66%.\n\nA 97.50% minimum is just 0.01 percentage points below the lowest recent\nresult. It provides a strict coverage requirement for maintenance work\nwithout enforcing the outdated 98.10% baseline.\n\n## Validation\n- [x] Reproduced the wrong-executable bug with a minimal Rust benchmark\nand verified checkout isolation fixes it.\n- [x] All five benchmark smoke tests and 438 Rust tests pass.\n- [x] Clippy, formatting, and workflow lint checks pass.\n- [x] Codecov's official YAML validator accepts the configuration.",
+          "timestamp": "2026-11-21T19:20:38Z",
+          "tree_id": "3c623de4a84b6fbdc317a8b557ee049f2c84887e",
+          "url": "https://github.com/slnc/ifchange/commit/263f3e0a7dbf152f20c393228993c2c70508bbef"
+        },
+        "date": 1795288980666,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4279286,
+            "range": "± 35304",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 5929946,
+            "range": "± 203613",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 31619714,
+            "range": "± 833535",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_introduce_1600_guards",
+            "value": 3855467,
+            "range": "± 32722",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 34214275,
+            "range": "± 1136594",
             "unit": "ns/iter"
           }
         ]
