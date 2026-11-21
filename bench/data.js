@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795288981226,
+  "lastUpdate": 1795289332446,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -3371,6 +3371,60 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 34214275,
             "range": "± 1136594",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "264827662+slnc-renovate-ci[bot]@users.noreply.github.com",
+            "name": "slnc-renovate-ci[bot]",
+            "username": "slnc-renovate-ci[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b1dc52989952795c003c92b042c2dc070fc96005",
+          "message": "chore(deps): update dependency node to v26 (#59)\n\nThis PR contains the following updates:\n\n| Package | Type | Update | Change |\n|---|---|---|---|\n| [node](https://redirect.github.com/actions/node-versions) | uses-with\n| major | `24` → `26` |\n\n---\n\n> [!WARNING]\n> Some dependencies could not be looked up. Check the warning logs for\nmore information.\n\n---\n\n### Release Notes\n\n<details>\n<summary>actions/node-versions (node)</summary>\n\n###\n[`v26.13.1`](https://redirect.github.com/actions/node-versions/releases/tag/26.13.1-43134154182):\n26.13.1\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.13.0-41378513395...26.13.1-43134154182)\n\nNode.js 26.13.1\n\n###\n[`v26.13.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.13.0-41378513395):\n26.13.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.12.1-39618969937...26.13.0-41378513395)\n\nNode.js 26.13.0\n\n###\n[`v26.12.1`](https://redirect.github.com/actions/node-versions/releases/tag/26.12.1-39618969937):\n26.12.1\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.12.0-38668157440...26.12.1-39618969937)\n\nNode.js 26.12.1\n\n###\n[`v26.12.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.12.0-38668157440):\n26.12.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.11.1-37718106145...26.12.0-38668157440)\n\nNode.js 26.12.0\n\n###\n[`v26.11.1`](https://redirect.github.com/actions/node-versions/releases/tag/26.11.1-37718106145):\n26.11.1\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.11.0-37718124002...26.11.1-37718106145)\n\nNode.js 26.11.1\n\n###\n[`v26.11.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.11.0-37718124002):\n26.11.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.10.0-35737674515...26.11.0-37718124002)\n\nNode.js 26.11.0\n\n###\n[`v26.10.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.10.0-35737674515):\n26.10.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.9.0-35174947414...26.10.0-35737674515)\n\nNode.js 26.10.0\n\n###\n[`v26.9.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.9.0-35174947414):\n26.9.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.8.2-34429851330...26.9.0-35174947414)\n\nNode.js 26.9.0\n\n###\n[`v26.8.2`](https://redirect.github.com/actions/node-versions/releases/tag/26.8.2-34429851330):\n26.8.2\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.8.1-33034053154...26.8.2-34429851330)\n\nNode.js 26.8.2\n\n###\n[`v26.8.1`](https://redirect.github.com/actions/node-versions/releases/tag/26.8.1-33034053154):\n26.8.1\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.8.0-33034064325...26.8.1-33034053154)\n\nNode.js 26.8.1\n\n###\n[`v26.8.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.8.0-33034064325):\n26.8.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.7.0-31064755789...26.8.0-33034064325)\n\nNode.js 26.8.0\n\n###\n[`v26.7.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.7.0-31064755789):\n26.7.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.6.0-30872438625...26.7.0-31064755789)\n\nNode.js 26.7.0\n\n###\n[`v26.6.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.6.0-30872438625):\n26.6.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.5.1-30508404249...26.6.0-30872438625)\n\nNode.js 26.6.0\n\n###\n[`v26.5.1`](https://redirect.github.com/actions/node-versions/releases/tag/26.5.1-30508404249):\n26.5.1\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.5.0-28944078721...26.5.1-30508404249)\n\nNode.js 26.5.1\n\n###\n[`v26.5.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.5.0-28944078721):\n26.5.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.4.0-28176665805...26.5.0-28944078721)\n\nNode.js 26.5.0\n\n###\n[`v26.4.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.4.0-28176665805):\n26.4.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.3.1-27765697053...26.4.0-28176665805)\n\nNode.js 26.4.0\n\n###\n[`v26.3.1`](https://redirect.github.com/actions/node-versions/releases/tag/26.3.1-27765697053):\n26.3.1\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.3.0-26776574275...26.3.1-27765697053)\n\nNode.js 26.3.1\n\n###\n[`v26.3.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.3.0-26776574275):\n26.3.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.2.0-26201774761...26.3.0-26776574275)\n\nNode.js 26.3.0\n\n###\n[`v26.2.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.2.0-26201774761):\n26.2.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.1.0-25496618813...26.2.0-26201774761)\n\nNode.js 26.2.0\n\n###\n[`v26.1.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.1.0-25496618813):\n26.1.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/26.0.0-25413736946...26.1.0-25496618813)\n\nNode.js 26.1.0\n\n###\n[`v26.0.0`](https://redirect.github.com/actions/node-versions/releases/tag/26.0.0-25413736946):\n26.0.0\n\n[Compare\nSource](https://redirect.github.com/actions/node-versions/compare/24.22.3-43134179821...26.0.0-25413736946)\n\nNode.js 26.0.0\n\n</details>\n\n---\n\n### Configuration\n\n📅 **Schedule**: (in timezone UTC)\n\n- Branch creation\n  - \"on monday\"\n- Automerge\n  - At any time (no schedule defined)\n\n🚦 **Automerge**: Disabled by config. Please merge this manually once you\nare satisfied.\n\n♻ **Rebasing**: Whenever PR is behind base branch, or you tick the\nrebase/retry checkbox.\n\n🔕 **Ignore**: Close this PR and you won't be reminded about this update\nagain.\n\n---\n\n- [ ] <!-- rebase-check -->If you want to rebase/retry this PR, check\nthis box\n\n---\n\nThis PR has been generated by [Mend Renovate\nCLI](https://redirect.github.com/renovatebot/renovate).\n\n<!--renovate-debug:eyJjcmVhdGVkSW5WZXIiOiI0NC4yMDAuMSIsInVwZGF0ZWRJblZlciI6IjQ0LjI0Mi4wIiwidGFyZ2V0QnJhbmNoIjoibWFpbiIsImxhYmVscyI6W119-->\n\nCo-authored-by: slnc-renovate-ci[bot] <264827662+slnc-renovate-ci[bot]@users.noreply.github.com>",
+          "timestamp": "2026-11-21T20:26:28+01:00",
+          "tree_id": "0b36c32f5f746dde0bdef8f71ef84289babf994b",
+          "url": "https://github.com/slnc/ifchange/commit/b1dc52989952795c003c92b042c2dc070fc96005"
+        },
+        "date": 1795289332104,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 4245326,
+            "range": "± 100649",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 7191668,
+            "range": "± 801834",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 37413392,
+            "range": "± 391505",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_introduce_1600_guards",
+            "value": 4199899,
+            "range": "± 20139",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 52569243,
+            "range": "± 215655",
             "unit": "ns/iter"
           }
         ]
