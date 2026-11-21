@@ -42,7 +42,12 @@ pub fn lint_diff(
 
     let phase1: Vec<(String, Result<_, String>)> = changed_files
         .par_iter()
-        .map(|file| (file.clone(), index_changed_file(repo_root, file)))
+        .map(|file| {
+            (
+                file.clone(),
+                index_changed_file(repo_root, file, &changed_files_map[file]),
+            )
+        })
         .collect();
 
     let mut file_indices: HashMap<String, FileIndex> = HashMap::new();

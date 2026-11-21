@@ -1663,3 +1663,105 @@ fn dir_target_in_multiline_thenchange_dir_unchanged() {
         stderr
     );
 }
+
+#[rstest::rstest]
+#[case::changed_existing_code("VALUE = 1\n", "VALUE = 2\n")]
+#[case::new_file("", "VALUE = 1\n")]
+fn introducing_ifchange_does_not_require_target_change(#[case] before: &str, #[case] body: &str) {
+    let dir = TempDir::new().unwrap();
+    let git = |args: &[&str]| {
+        let output = std::process::Command::new("git")
+            .args(args)
+            .current_dir(dir.path())
+            .output()
+            .unwrap();
+        assert!(output.status.success(), "{:?}", output);
+        String::from_utf8(output.stdout).unwrap()
+    };
+    git(&["init", "-q"]);
+    write_files(dir.path(), &[("target.py", "VALUE = 1\n")]);
+    if !before.is_empty() {
+        write_files(dir.path(), &[("source.py", before)]);
+    }
+    git(&["add", "."]);
+    git(&[
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@example.com",
+        "-c",
+        "core.hooksPath=/dev/null",
+        "commit",
+        "--no-gpg-sign",
+        "-qm",
+        "baseline",
+    ]);
+    let source = format!("# LINT.IfChange\n{body}# LINT.ThenChange(target.py)\n");
+    write_files(dir.path(), &[("source.py", &source)]);
+    git(&["add", "."]);
+    let diff = git(&["diff", "--cached", "--no-ext-diff", "--relative"]);
+    let (code, _, stderr) = run_lint_in_repo(dir.path(), &diff, &[]);
+    assert_eq!(code, 0, "initial adoption should pass: {stderr}");
+
+    git(&[
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@example.com",
+        "-c",
+        "core.hooksPath=/dev/null",
+        "commit",
+        "--no-gpg-sign",
+        "-qm",
+        "introduce guard",
+    ]);
+    write_files(
+        dir.path(),
+        &[("source.py", &source.replace(body, "VALUE = 3\n"))],
+    );
+    git(&["add", "."]);
+    let diff = git(&["diff", "--cached", "--no-ext-diff", "--relative"]);
+    let (code, _, stderr) = run_lint_in_repo(dir.path(), &diff, &[]);
+    assert_eq!(
+        code, 1,
+        "subsequent changes must enforce the guard: {stderr}"
+    );
+    assert!(stderr.contains("target file unchanged"), "{stderr}");
+}
+
+#[test]
+fn rewritten_guard_with_inserted_prefix_still_enforces_target() {
+    let (code, _, stderr) = lint_case(
+        &[
+            ("source.py", "# heading\n# LINT.IfChange(updated)\nVALUE = 2\n# LINT.ThenChange(target.py)\n"),
+            ("target.py", "VALUE = 1\n"),
+        ],
+        &[("source.py", "@@ -1,3 +1,4 @@\n-# LINT.IfChange\n-VALUE = 1\n+# heading\n+# LINT.IfChange(updated)\n+VALUE = 2\n # LINT.ThenChange(target.py)")],
+        &[],
+    );
+    assert_eq!(
+        code, 1,
+        "rewriting an existing guard must enforce it: {stderr}"
+    );
+    assert!(stderr.contains("target file unchanged"), "{stderr}");
+}
+
+#[test]
+fn introducing_guard_still_validates_its_target() {
+    let (code, _, stderr) = lint_case_repo(
+        &[(
+            "source.py",
+            "# LINT.IfChange\nVALUE = 1\n# LINT.ThenChange(missing.py)\n",
+        )],
+        &[(
+            "source.py",
+            "@@ -0,0 +1,3 @@\n+# LINT.IfChange\n+VALUE = 1\n+# LINT.ThenChange(missing.py)",
+        )],
+        &[],
+    );
+    assert_eq!(
+        code, 1,
+        "new guards must still pass scan validation: {stderr}"
+    );
+    assert!(stderr.contains("missing.py"), "{stderr}");
+}

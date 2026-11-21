@@ -1,9 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 use super::{ChangedFileOutcome, FileIndex, Pair, TargetLoad};
 use crate::directive::{
-    looks_like_directive, parse_file_directives, validate_directive_uniqueness,
+    looks_like_directive, parse_directives_from_content, parse_file_directives,
+    validate_directive_uniqueness,
 };
 use crate::engine::resolve::{resolve_target_path, split_target_label};
 use crate::model::{Directive, FileChanges, LineRange};
@@ -137,13 +138,89 @@ pub(super) fn build_changed_lines_map(
         .collect()
 }
 
+/// Identify added guards that do not replace an old guard. Reconstructing the
+/// preimage keeps comment and string parsing identical to normal file parsing.
+fn new_ifchange_lines(
+    file: &str,
+    changes: &FileChanges,
+    directives: &[Directive],
+) -> HashSet<usize> {
+    let added = &changes.addition_new_lines;
+    if !directives
+        .iter()
+        .any(|d| matches!(d, Directive::IfChange { line, .. } if added.contains(line)))
+    {
+        return HashSet::new();
+    }
+    let Ok(content) = std::fs::read_to_string(file) else {
+        return HashSet::new();
+    };
+    let mut removals: HashMap<usize, Vec<&str>> = HashMap::new();
+    for (line, text) in &changes.removal_new_lines {
+        removals.entry(*line).or_default().push(text);
+    }
+    let lines: Vec<_> = content.lines().collect();
+    let mut old_content = String::new();
+    let mut old_gaps = Vec::new();
+    for line in 1..=lines.len() + 1 {
+        if let Some(removed) = removals.get(&line) {
+            for text in removed {
+                old_content.push_str(text);
+                old_content.push('\n');
+                old_gaps.push(line);
+            }
+        }
+        if line <= lines.len() && !added.contains(&line) {
+            old_content.push_str(lines[line - 1]);
+            old_content.push('\n');
+            old_gaps.push(line);
+        }
+    }
+    let Ok(old_directives) = parse_directives_from_content(&old_content, file) else {
+        // An unreadable preimage must not disable existing enforcement.
+        return HashSet::new();
+    };
+    let old_if_gaps: HashSet<_> = old_directives
+        .iter()
+        .filter_map(|d| match d {
+            Directive::IfChange { line, .. } => old_gaps.get(line - 1).copied(),
+            _ => None,
+        })
+        .collect();
+    directives
+        .iter()
+        .filter_map(|d| {
+            let Directive::IfChange { line, .. } = d else {
+                return None;
+            };
+            if !added.contains(line) {
+                return None;
+            }
+            let mut start = *line;
+            while start > 1 && added.contains(&(start - 1)) {
+                start -= 1;
+            }
+            // A replacement may insert lines ahead of the old opening marker.
+            // Keep enforcement conservatively if this added run replaces a guard.
+            let mut end = *line;
+            while added.contains(&(end + 1)) {
+                end += 1;
+            }
+            (!old_if_gaps.iter().any(|gap| *gap >= start && *gap <= end)).then_some(*line)
+        })
+        .collect()
+}
+
 pub(super) fn index_changed_file(
     repo_root: &Path,
     file: &str,
+    changes: &FileChanges,
 ) -> Result<ChangedFileOutcome, String> {
     let directives = parse_file_directives(&fs_path(repo_root, file)).map_err(|e| e.to_string())?;
     let uniqueness_errors = validate_directive_uniqueness(&directives, file);
-    let (pairs, orphan_then, orphan_if) = build_pairs(file, &directives);
+    let (mut pairs, orphan_then, orphan_if) = build_pairs(file, &directives);
+    let new_guards = new_ifchange_lines(&fs_path(repo_root, file), changes, &directives);
+    pairs.retain(|pair| !new_guards.contains(&pair.if_line));
 
     Ok(ChangedFileOutcome {
         index: FileIndex {
