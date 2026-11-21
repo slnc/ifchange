@@ -1667,6 +1667,7 @@ fn dir_target_in_multiline_thenchange_dir_unchanged() {
 #[rstest::rstest]
 #[case::changed_existing_code("VALUE = 1\n", "VALUE = 2\n")]
 #[case::new_file("", "VALUE = 1\n")]
+#[case::directive_in_string("EXAMPLE = '# LINT.IfChange'\n", "VALUE = 1\n")]
 fn introducing_ifchange_does_not_require_target_change(#[case] before: &str, #[case] body: &str) {
     let dir = TempDir::new().unwrap();
     let git = |args: &[&str]| {
@@ -1764,4 +1765,27 @@ fn introducing_guard_still_validates_its_target() {
         "new guards must still pass scan validation: {stderr}"
     );
     assert!(stderr.contains("missing.py"), "{stderr}");
+}
+
+#[test]
+fn independent_new_guards_do_not_disable_existing_guard() {
+    let source = "# LINT.IfChange(existing)\nVALUE = 2\n# LINT.ThenChange(existing.py)\n# separator\n# LINT.IfChange(first)\nFIRST = 1\n# LINT.ThenChange(first.py)\n# separator\n# LINT.IfChange(second)\nSECOND = 1\n# LINT.ThenChange(second.py)\n";
+    let hunk = "@@ -1,5 +1,11 @@\n-# LINT.IfChange\n-VALUE = 1\n+# LINT.IfChange(existing)\n+VALUE = 2\n # LINT.ThenChange(existing.py)\n # separator\n+# LINT.IfChange(first)\n+FIRST = 1\n+# LINT.ThenChange(first.py)\n # separator\n+# LINT.IfChange(second)\n+SECOND = 1\n+# LINT.ThenChange(second.py)";
+    let (code, _, stderr) = lint_case_repo(
+        &[
+            ("source.py", source),
+            ("existing.py", "VALUE = 1\n"),
+            ("first.py", "FIRST = 1\n"),
+            ("second.py", "SECOND = 1\n"),
+        ],
+        &[("source.py", hunk)],
+        &[],
+    );
+    assert_eq!(code, 1, "{stderr}");
+    assert!(
+        stderr.contains("existing.py: target file unchanged"),
+        "{stderr}"
+    );
+    assert!(!stderr.contains("first.py"), "{stderr}");
+    assert!(!stderr.contains("second.py"), "{stderr}");
 }

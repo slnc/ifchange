@@ -177,7 +177,7 @@ fn new_ifchange_lines(
         }
     }
     let Ok(old_directives) = parse_directives_from_content(&old_content, file) else {
-        // An unreadable preimage must not disable existing enforcement.
+        // An invalid preimage must not disable existing enforcement.
         return HashSet::new();
     };
     let old_if_gaps: HashSet<_> = old_directives
@@ -185,6 +185,30 @@ fn new_ifchange_lines(
         .filter_map(|d| match d {
             Directive::IfChange { line, .. } => old_gaps.get(line - 1).copied(),
             _ => None,
+        })
+        .collect();
+    let mut added_lines: Vec<_> = added.iter().copied().collect();
+    added_lines.sort_unstable();
+    let mut added_ranges: Vec<(usize, usize)> = Vec::new();
+    for line in added_lines {
+        if let Some((_, end)) = added_ranges.last_mut() {
+            if line == *end + 1 {
+                *end = line;
+                continue;
+            }
+        }
+        added_ranges.push((line, line));
+    }
+    // A replacement can insert lines before its old guard. Retain enforcement
+    // for every guard in the same added run to avoid ambiguous matching.
+    let replacement_ranges: HashSet<_> = old_if_gaps
+        .iter()
+        .filter_map(|gap| {
+            let index = added_ranges.partition_point(|(_, end)| end < gap);
+            added_ranges
+                .get(index)
+                .filter(|(start, _)| start <= gap)
+                .map(|_| index)
         })
         .collect();
     directives
@@ -196,17 +220,8 @@ fn new_ifchange_lines(
             if !added.contains(line) {
                 return None;
             }
-            let mut start = *line;
-            while start > 1 && added.contains(&(start - 1)) {
-                start -= 1;
-            }
-            // A replacement may insert lines ahead of the old opening marker.
-            // Keep enforcement conservatively if this added run replaces a guard.
-            let mut end = *line;
-            while added.contains(&(end + 1)) {
-                end += 1;
-            }
-            (!old_if_gaps.iter().any(|gap| *gap >= start && *gap <= end)).then_some(*line)
+            let index = added_ranges.partition_point(|(_, end)| end < line);
+            (!replacement_ranges.contains(&index)).then_some(*line)
         })
         .collect()
 }
