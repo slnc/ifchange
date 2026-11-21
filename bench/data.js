@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795286678588,
+  "lastUpdate": 1795287806699,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -3263,6 +3263,60 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 46360168,
             "range": "± 168338",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "06f9101db65671bdb8f63b5544fb4a0424e5067a",
+          "message": "fix: allow initial IfChange adoption (#63)\n\n## Why\nIntroducing an IfChange guard while adding or changing its enclosed code\nincorrectly fails with `target file unchanged`. The linter applies the\nnew rule retroactively to its introduction diff.\n\n## What\n- Distinguish new guards from rewritten guards using the diff's\nreconstructed preimage and existing comment parser.\n- Start co-change enforcement on subsequent changes while preserving\nimmediate scan validation and existing guards.\n- Reuse the content trigger predicate to avoid preimage work for\nmetadata edits; index addition ranges once for bulk adoption.\n- Add staged Git regressions, conservative fallback coverage, and a\nbulk-adoption benchmark.\n\n## Verify / Risk\n- [x] 438 Rust tests; 51 Node tests; Clippy; formatting; diff checks.\n- [x] Release Criterion benchmarks against `origin/main` (`6efa07b`),\nsame machine, 100 samples each. No material regression: the small\nincreases are within Criterion's noise threshold.\n- Replacements mixing old and new guards retain enforcement\nconservatively.\n- Local tests use `TMPDIR=/dev/shm` because an existing `/tmp/.git`\ninterferes with repository-root tests.\n\n| Benchmark | origin/main | Branch |\n|---|---:|---:|\n| Lint 1,000 files | 3.08 ms | 2.97 ms |\n| Lint 5,000 files | 15.72 ms | 16.10 ms |\n| Lint 16k-line diff | 3.44 ms | 3.49 ms |\n| Scan 5,000 files | 31.53 ms | 32.15 ms |\n| Introduce 1,600 guards | 4.86 ms | 3.12 ms |",
+          "timestamp": "2026-11-21T20:01:30+01:00",
+          "tree_id": "f27e116b5b0812a54038a9a323f95f1d07c6c9c2",
+          "url": "https://github.com/slnc/ifchange/commit/06f9101db65671bdb8f63b5544fb4a0424e5067a"
+        },
+        "date": 1795287806033,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 3290941,
+            "range": "± 14400",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 4438024,
+            "range": "± 55015",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 23867338,
+            "range": "± 685679",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_introduce_1600_guards",
+            "value": 2986132,
+            "range": "± 8666",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 27906769,
+            "range": "± 494113",
             "unit": "ns/iter"
           }
         ]
