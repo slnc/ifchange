@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795289639072,
+  "lastUpdate": 1795319309002,
   "repoUrl": "https://github.com/slnc/ifchange",
   "entries": {
     "Benchmark": [
@@ -3479,6 +3479,60 @@ window.BENCHMARK_DATA = {
             "name": "scan_5000_files",
             "value": 47034594,
             "range": "± 752238",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "69429+slnc@users.noreply.github.com",
+            "name": "slnc",
+            "username": "slnc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cfa57cc034b3d1b1cd0e7f3ba38fcdc6c2c7ebc0",
+          "message": "ci: generate SLSA provenance and block publishing without it (#66)\n\n`provenance / final` has failed on every release since v0.3.0, so the\nRelease workflow always ends red and no `.intoto.jsonl` provenance has\never been attached to a GitHub release. Nothing depended on the job, so\nthe failure went unnoticed.\n\nThe SLSA generic generator only accepts being called by tag. Pinned to a\nSHA, its builder fetch exits with:\n\n```\nInvalid ref: f7dd8c54c2067bafc12ca7a55595d5ee9b75204a. Expected ref of the form refs/tags/vX.Y.Z\n```\n\n([v0.3.3\nrun](https://github.com/slnc/ifchange/actions/runs/44941642863)). This\nis the documented exception to SHA-pinning in slsa-github-generator.\n\n- Reference `generator_generic_slsa3.yml@v2.1.0` (latest release) by\ntag. A `# NOSONAR` comment suppresses SonarCloud rule S7637 (\"Use full\ncommit SHA\") on that line and says why.\n- `publish` now needs `provenance`. `update-action-tag`,\n`publish-crate`, `publish-npm` and `publish-pypi` all depend on\n`publish`, so a provenance failure stops the release before any artifact\nships without provenance. Cost: about 45s added to releases (provenance\ntook ~45s in the v0.3.3 run, in parallel with `publish`). Recovery after\na provenance outage is \"Re-run failed jobs\".\n- Drop a comment that restated the `node -e` script below it.\n\nRenovate (`config:recommended`, no `pinDigests`) will keep bumping the\ntag without re-pinning it to a SHA.\n\n**Verification:** only possible on the next tagged release: `provenance\n/ final` should pass, the release should include\n`multiple.intoto.jsonl`, and the publish jobs should start after it.",
+          "timestamp": "2026-11-22T04:46:17+01:00",
+          "tree_id": "90e1b74293beecadab11786470cccfdba312cd7f",
+          "url": "https://github.com/slnc/ifchange/commit/cfa57cc034b3d1b1cd0e7f3ba38fcdc6c2c7ebc0"
+        },
+        "date": 1795319308519,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "lint_latency_16kloc_diff",
+            "value": 3376060,
+            "range": "± 30586",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_1000_files",
+            "value": 5778531,
+            "range": "± 69900",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_5000_files",
+            "value": 30272310,
+            "range": "± 581723",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "lint_introduce_1600_guards",
+            "value": 3599047,
+            "range": "± 24399",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scan_5000_files",
+            "value": 47413642,
+            "range": "± 557028",
             "unit": "ns/iter"
           }
         ]
