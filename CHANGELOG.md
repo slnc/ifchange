@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/slnc/ifchange/compare/v0.3.2...v0.3.3) (2026-11-21)
+
+
+### Bug Fixes
+
+* allow initial IfChange adoption ([#63](https://github.com/slnc/ifchange/issues/63)) ([06f9101](https://github.com/slnc/ifchange/commit/06f9101db65671bdb8f63b5544fb4a0424e5067a))
+
 ## [0.3.2](https://github.com/slnc/ifchange/compare/v0.3.1...v0.3.2) (2026-08-21)
 
 

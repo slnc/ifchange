@@ -156,14 +156,14 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # v2.1.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0 # NOSONAR: generator rejects SHA refs
     with:
       base64-subjects: "${{ needs.combine-hashes.outputs.hashes }}"
       upload-assets: true
 
   publish:
     runs-on: ubuntu-latest
-    needs: [resolve-tag, build]
+    needs: [resolve-tag, build, provenance]
     permissions:
       contents: write
       id-token: write
@@ -302,7 +302,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: '24'
+          node-version: '26'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download build artifacts
@@ -316,7 +316,6 @@ jobs:
         run: |
           VERSION="${RELEASE_TAG#v}"
           cd npm
-          # Update optionalDependencies versions to match
           node -e "
             const pkg = require('./package.json');
             for (const dep of Object.keys(pkg.optionalDependencies)) {
@@ -374,17 +373,12 @@ jobs:
             if [ $status -ne 0 ]; then
               if echo "$output" | grep -q "previously published\|cannot publish over"; then
                 echo "$pkg already published, skipping"
-              elif echo "$output" | grep -q "404 Not Found"; then
-                echo "$pkg not found on registry, retrying without --provenance..."
-                npm publish "$dir" --access public
               else
                 echo "::error::Failed to publish $pkg"
                 exit 1
               fi
             fi
           done
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Wait for platform packages on registry
         run: |
@@ -427,8 +421,6 @@ jobs:
           else
             npm publish ./npm --access public --provenance
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-pypi:
     runs-on: ubuntu-latest

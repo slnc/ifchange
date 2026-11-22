@@ -79,5 +79,36 @@ fn bench_lint_1000(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_lint_1000, bench_lint_5000);
+fn bench_introduce_guards(c: &mut Criterion) {
+    let dir = TempDir::new().unwrap();
+    let mut content = String::new();
+    for i in 0..1600 {
+        content.push_str(&format!(
+            "# LINT.IfChange\nVALUE_{i} = {i}\n# LINT.ThenChange(guards.py)\n"
+        ));
+    }
+    fs::write(dir.path().join("guards.py"), &content).unwrap();
+    let mut diff = format!(
+        "--- /dev/null\n+++ b/guards.py\n@@ -0,0 +1,{} @@\n",
+        content.lines().count()
+    );
+    for line in content.lines() {
+        diff.push('+');
+        diff.push_str(line);
+        diff.push('\n');
+    }
+    c.bench_function("lint_introduce_1600_guards", |b| {
+        b.iter(|| {
+            let result = lint_diff(&diff, false, false, &[], dir.path());
+            assert_eq!(result.exit_code, 0);
+        });
+    });
+}
+
+criterion_group!(
+    benches,
+    bench_lint_1000,
+    bench_lint_5000,
+    bench_introduce_guards
+);
 criterion_main!(benches);
